@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx wxt@latest init . -t react -pm yarn)",
+      "Bash(npx wxt@latest init . --template react --pm yarn)",
+      "Read(//private/tmp/**)",
+      "Bash(rm -rf cc-scaffold)",
+      "Bash(npx wxt@latest init cc-scaffold --template react --pm yarn)",
+      "Bash(ls -la && rm -rf /tmp/cc-scaffold)",
+      "Bash(yarn install *)",
+      "Bash(yarn add *)",
+      "Bash(npm view *)"
+    ]
+  }
+}
