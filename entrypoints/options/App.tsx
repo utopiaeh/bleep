@@ -7,8 +7,10 @@ import { type ClearStatus } from '../../components/StatusButton';
 import { TabClearList } from '../../components/TabClearList';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useSettingsStore } from '../../store/settings';
 import { isGeckoBased } from '../../utils/browser-info';
+import type { Language } from '../../utils/i18n';
 import {
   clearGlobal,
   clearTab,
@@ -23,6 +25,7 @@ type Tab = Browser.tabs.Tab;
 
 export default function App() {
   useTheme();
+  const t = useTranslation();
   const {
     selectedTypes,
     toggleType,
@@ -32,6 +35,8 @@ export default function App() {
     setAutoReloadAfterClear,
     theme,
     setTheme,
+    language,
+    setLanguage,
     resetSettings,
   } = useSettingsStore();
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -144,29 +149,35 @@ export default function App() {
     <div className="min-h-screen w-full bg-white dark:bg-neutral-950">
       <div className="text-neutral-900 dark:text-neutral-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Cache Cleaner — Settings</h1>
+          <h1 className="text-2xl font-semibold">{t('settingsTitle')}</h1>
           <button
             onClick={resetSettings}
             className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1.5 text-xs"
           >
-            Reset to defaults
+            {t('resetToDefaults')}
           </button>
         </div>
 
         <section className="mb-8">
           <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            Theme
+            {t('theme')}
           </h2>
           <div className="flex gap-4">
-            {(['system', 'light', 'dark'] as const).map((t) => (
-              <label key={t} className="flex items-center gap-2 text-sm cursor-pointer capitalize">
+            {(
+              [
+                ['system', t('themeSystem')],
+                ['light', t('themeLight')],
+                ['dark', t('themeDark')],
+              ] as const
+            ).map(([value, label]) => (
+              <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="radio"
-                  checked={theme === t}
-                  onChange={() => setTheme(t)}
+                  checked={theme === value}
+                  onChange={() => setTheme(value)}
                   className="cursor-pointer"
                 />
-                {t}
+                {label}
               </label>
             ))}
           </div>
@@ -174,7 +185,24 @@ export default function App() {
 
         <section className="mb-8">
           <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            Behavior
+            {t('language')}
+          </h2>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as Language)}
+            className="rounded-md border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900 px-3 py-1.5 text-sm cursor-pointer focus:outline-none focus:border-blue-500"
+          >
+            <option value="auto">{t('languageAuto')}</option>
+            <option value="en">{t('languageEnglish')}</option>
+            <option value="ru">{t('languageRussian')}</option>
+            <option value="ro">{t('languageRomanian')}</option>
+            <option value="uk">{t('languageUkrainian')}</option>
+          </select>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+            {t('behavior')}
           </h2>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input
@@ -183,37 +211,35 @@ export default function App() {
               onChange={(e) => setAutoReloadAfterClear(e.target.checked)}
               className="accent-blue-500 cursor-pointer"
             />
-            Reload tab after clearing (per-site only)
+            {t('reloadTabAfterClearingPerSite')}
           </label>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">Data types</h2>
+          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+            {t('dataTypes')}
+          </h2>
           <DataTypeGrid
             types={DATA_TYPES}
             selected={selectedTypes}
             onToggle={toggleType}
-            isDisabled={(t) => scopeMode === 'site' && !t.siteScoped}
-            renderBadge={(t) =>
-              scopeMode === 'site' && !t.siteScoped ? <span className="text-xs">(global only)</span> : null
+            isDisabled={(type) => scopeMode === 'site' && !type.siteScoped}
+            renderBadge={(type) =>
+              scopeMode === 'site' && !type.siteScoped ? (
+                <span className="text-xs">{t('globalOnly')}</span>
+              ) : null
             }
           />
-          {scopeMode === 'site' && (
-            <p className="text-xs text-neutral-500 mt-2">
-              History, Download History, and Form Data can't be scoped to one site — they only clear
-              in Global mode.
-            </p>
-          )}
+          {scopeMode === 'site' && <p className="text-xs text-neutral-500 mt-2">{t('siteScopeNote')}</p>}
           {scopeMode === 'global' && (
-            <p className="text-xs text-neutral-500 mt-2">
-              Local Storage and Session Storage share one browser API in Global mode — checking
-              either one clears both.
-            </p>
+            <p className="text-xs text-neutral-500 mt-2">{t('storageKeyShareNote')}</p>
           )}
         </section>
 
         <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">Scope</h2>
+          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+            {t('scope')}
+          </h2>
           <div className="flex gap-6 mb-4">
             <label className="flex items-start gap-2 text-sm max-w-xs cursor-pointer">
               <input
@@ -223,11 +249,8 @@ export default function App() {
                 onChange={() => setScopeMode('global')}
               />
               <span>
-                <span className="block font-medium">Global</span>
-                <span className="block text-xs text-neutral-500">
-                  Clears the checked types for every site you've visited, not just the one you're
-                  on. No extra permission needed.
-                </span>
+                <span className="block font-medium">{t('scopeGlobal')}</span>
+                <span className="block text-xs text-neutral-500">{t('scopeGlobalDescription')}</span>
               </span>
             </label>
             <label className="flex items-start gap-2 text-sm max-w-xs cursor-pointer">
@@ -238,11 +261,8 @@ export default function App() {
                 onChange={() => setScopeMode('site')}
               />
               <span>
-                <span className="block font-medium">Per site / domain</span>
-                <span className="block text-xs text-neutral-500">
-                  Pick one open tab below; only that site's data is cleared, everything else is
-                  untouched. Asks for one-time site permission the first time you clear.
-                </span>
+                <span className="block font-medium">{t('scopePerSite')}</span>
+                <span className="block text-xs text-neutral-500">{t('scopePerSiteDescription')}</span>
               </span>
             </label>
           </div>
@@ -251,17 +271,16 @@ export default function App() {
             <div className="max-w-xs">
               <DangerConfirmButton
                 status={globalStatus}
-                idleLabel="Clear all sites"
-                confirmLabel="Yes, clear everything"
+                idleLabel={t('clearAllSites')}
+                confirmLabel={t('yesClearEverything')}
                 onConfirm={handleGlobalClear}
               />
             </div>
           ) : (
             <div>
               <p className="text-xs text-neutral-500 mb-2">
-                Only open tabs can be targeted.
-                {isGeckoBased() &&
-                  ' This browser clears via the page itself, so unreachable (backgrounded/discarded) tabs may not fully clear.'}
+                {t('openTabsOnly')}
+                {isGeckoBased() && t('geckoClearNote')}
               </p>
 
               <div className="flex gap-2 mb-2">
@@ -269,7 +288,7 @@ export default function App() {
                   type="text"
                   value={siteFilter}
                   onChange={(e) => setSiteFilter(e.target.value)}
-                  placeholder="Filter open tabs by domain…"
+                  placeholder={t('filterTabsPlaceholder')}
                   className="flex-1 rounded-md border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900 px-3 py-1.5 text-sm placeholder:text-neutral-500 focus:outline-none focus:border-blue-500"
                 />
                 <button
@@ -278,12 +297,12 @@ export default function App() {
                   className="rounded-md bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1.5 text-xs font-medium whitespace-nowrap"
                 >
                   {bulkStatus === 'clearing'
-                    ? 'Clearing…'
+                    ? t('clearing')
                     : bulkStatus === 'done'
-                      ? 'Cleared ✓'
+                      ? t('cleared')
                       : bulkStatus === 'failed'
-                        ? 'Some failed'
-                        : `Clear all (${filteredTabs.length})`}
+                        ? t('someFailed')
+                        : t('clearAllCount', { count: filteredTabs.length })}
                 </button>
               </div>
 
@@ -300,7 +319,9 @@ export default function App() {
 
         {selectedTypes.includes('history') && (
           <section>
-            <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">Recent history</h2>
+            <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+              {t('recentHistory')}
+            </h2>
             <HistoryList items={history} onDelete={handleDeleteHistoryItem} />
           </section>
         )}

@@ -1,4 +1,5 @@
 import type { Browser } from 'wxt/browser';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface HistoryListProps {
   items: Browser.history.HistoryItem[];
@@ -6,6 +7,8 @@ interface HistoryListProps {
 }
 
 export function HistoryList({ items, onDelete }: HistoryListProps) {
+  const t = useTranslation();
+
   return (
     <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
       {items.map((item) => (
@@ -15,7 +18,7 @@ export function HistoryList({ items, onDelete }: HistoryListProps) {
             onClick={() => item.url && onDelete(item.url)}
             className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1 text-xs"
           >
-            Remove
+            {t('remove')}
           </button>
         </li>
       ))}

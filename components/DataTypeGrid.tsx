@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 import type { DataTypeDef, DataTypeId } from '../utils/data-types';
+import type { TranslationKey } from '../utils/i18n';
 
 interface DataTypeGridProps {
   types: DataTypeDef[];
@@ -20,24 +22,26 @@ export function DataTypeGrid({
   columns = 2,
   className = '',
 }: DataTypeGridProps) {
+  const t = useTranslation();
+
   return (
     <ul className={`grid ${columns === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 ${className}`}>
-      {types.map((t) => {
-        const disabled = isDisabled?.(t) ?? false;
+      {types.map((type) => {
+        const disabled = isDisabled?.(type) ?? false;
         return (
-          <li key={t.id}>
+          <li key={type.id}>
             <label
               className={`flex items-center gap-2 text-sm ${disabled ? 'text-neutral-500 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <input
                 type="checkbox"
-                checked={selected.includes(t.id)}
-                onChange={() => onToggle(t.id)}
+                checked={selected.includes(type.id)}
+                onChange={() => onToggle(type.id)}
                 disabled={disabled}
                 className={`accent-blue-500 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               />
-              {t.label}
-              {renderBadge?.(t)}
+              {t(`dt_${type.id}` as TranslationKey)}
+              {renderBadge?.(type)}
             </label>
           </li>
         );

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 import { StatusButton, type ClearStatus } from './StatusButton';
 
 interface DangerConfirmButtonProps {
@@ -18,6 +19,7 @@ export function DangerConfirmButton({
   disabled,
   autoCancelMs = 4000,
 }: DangerConfirmButtonProps) {
+  const t = useTranslation();
   const [armed, setArmed] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -56,7 +58,7 @@ export function DangerConfirmButton({
           onClick={cancel}
           className="rounded-md cursor-pointer border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 px-3 py-2 text-sm"
         >
-          Cancel
+          {t('cancel')}
         </button>
       </div>
     );

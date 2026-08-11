@@ -5,14 +5,21 @@ import { DataTypeGrid } from '../../components/DataTypeGrid';
 import { StatusButton, type ClearStatus } from '../../components/StatusButton';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useSettingsStore } from '../../store/settings';
-import { clearGlobal, clearTabData, requestOriginPermission, siteScopedIds } from '../../utils/clearing';
+import {
+  clearGlobal,
+  clearTabData,
+  requestOriginPermission,
+  siteScopedIds,
+} from '../../utils/clearing';
 import { DATA_TYPES } from '../../utils/data-types';
 
 const QUICK_TYPES = DATA_TYPES.filter((t) => t.quick);
 
 export default function App() {
   useTheme();
+  const t = useTranslation();
   const selectedTypes = useSettingsStore((s) => s.selectedTypes);
   const toggleType = useSettingsStore((s) => s.toggleType);
   const autoReloadAfterClear = useSettingsStore((s) => s.autoReloadAfterClear);
@@ -49,7 +56,9 @@ export default function App() {
         setTabStatus('failed');
       } else {
         const ok =
-          granted && activeTab ? await clearTabData(activeTab, siteScopedIds(selectedTypes)) : false;
+          granted && activeTab
+            ? await clearTabData(activeTab, siteScopedIds(selectedTypes))
+            : false;
         setTabStatus(ok ? 'done' : 'failed');
         if (ok && autoReloadAfterClear && activeTab?.id != null) {
           markReloading(activeTab.id);
@@ -64,10 +73,15 @@ export default function App() {
   }
 
   return (
-    <div className="w-80 p-4 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
-      <h1 className="text-lg font-semibold mb-3">Cache Cleaner</h1>
+    <div className="w-86 p-4 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+      <h1 className="text-lg font-semibold mb-3">{t('popupTitle')}</h1>
 
-      <DataTypeGrid types={QUICK_TYPES} selected={selectedTypes} onToggle={toggleType} className="mb-3" />
+      <DataTypeGrid
+        types={QUICK_TYPES}
+        selected={selectedTypes}
+        onToggle={toggleType}
+        className="mb-3"
+      />
 
       <hr className="border-neutral-200 dark:border-neutral-800 mb-3" />
 
@@ -78,34 +92,34 @@ export default function App() {
           onChange={(e) => setAutoReloadAfterClear(e.target.checked)}
           className="accent-blue-500 cursor-pointer"
         />
-        Reload tab after clearing
+        {t('reloadTabAfterClearing')}
       </label>
 
       <StatusButton
         status={isReloading(activeTabId) ? 'clearing' : tabStatus}
         onClick={handleClearActiveTab}
         disabled={isReloading(activeTabId)}
-        idleLabel="Clear active tab only"
-        clearingLabel={isReloading(activeTabId) ? 'Reloading…' : 'Clearing…'}
-        failedLabel="Failed / denied"
+        idleLabel={t('clearActiveTabOnly')}
+        clearingLabel={isReloading(activeTabId) ? t('reloading') : t('clearing')}
+        failedLabel={t('failedOrDenied')}
       />
-      <p className="text-xs text-neutral-500 mt-1">Only the site open in this tab is affected.</p>
+      <p className="text-xs text-neutral-500 mt-1">{t('activeTabHint')}</p>
 
       <div className="mt-3">
         <DangerConfirmButton
           status={status}
-          idleLabel="Clear all sites"
-          confirmLabel="Yes, clear everything"
+          idleLabel={t('clearAllSites')}
+          confirmLabel={t('yesClearEverything')}
           onConfirm={handleClear}
         />
       </div>
-      <p className="text-xs text-neutral-500 mt-1">Applies to every site, not just this tab.</p>
+      <p className="text-xs text-neutral-500 mt-1">{t('allSitesHint')}</p>
 
       <button
         onClick={() => browser.runtime.openOptionsPage()}
         className="w-full mt-2 rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer py-2 text-sm"
       >
-        Settings
+        {t('settings')}
       </button>
     </div>
   );

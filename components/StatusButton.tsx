@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 export type ClearStatus = 'idle' | 'clearing' | 'done' | 'failed';
 
@@ -24,12 +25,16 @@ export function StatusButton({
   onClick,
   disabled,
   idleLabel,
-  clearingLabel = 'Clearing…',
-  doneLabel = 'Cleared ✓',
-  failedLabel = 'Failed',
+  clearingLabel,
+  doneLabel,
+  failedLabel,
   variant = 'primary',
   className = '',
 }: StatusButtonProps) {
+  const t = useTranslation();
+  clearingLabel ??= t('clearing');
+  doneLabel ??= t('cleared');
+  failedLabel ??= t('failed');
   const label =
     status === 'clearing' ? clearingLabel : status === 'done' ? doneLabel : status === 'failed' ? failedLabel : idleLabel;
 

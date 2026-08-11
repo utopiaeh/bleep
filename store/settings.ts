@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { siteScopedIds } from '../utils/clearing';
 import type { DataTypeId } from '../utils/data-types';
+import type { Language } from '../utils/i18n';
 import { browserLocalStorage } from '../utils/storage-adapter';
 
 export type ScopeMode = 'global' | 'site';
@@ -12,6 +13,7 @@ const DEFAULTS = {
   scopeMode: 'site' as ScopeMode,
   autoReloadAfterClear: true,
   theme: 'system' as Theme,
+  language: 'auto' as Language,
 };
 
 interface SettingsState {
@@ -19,10 +21,12 @@ interface SettingsState {
   scopeMode: ScopeMode;
   autoReloadAfterClear: boolean;
   theme: Theme;
+  language: Language;
   toggleType: (id: DataTypeId) => void;
   setScopeMode: (mode: ScopeMode) => void;
   setAutoReloadAfterClear: (value: boolean) => void;
   setTheme: (theme: Theme) => void;
+  setLanguage: (language: Language) => void;
   resetSettings: () => void;
 }
 
@@ -43,6 +47,7 @@ export const useSettingsStore = create<SettingsState>()(
         }),
       setAutoReloadAfterClear: (value) => set({ autoReloadAfterClear: value }),
       setTheme: (theme) => set({ theme }),
+      setLanguage: (language) => set({ language }),
       resetSettings: () => set(DEFAULTS),
     }),
     {
