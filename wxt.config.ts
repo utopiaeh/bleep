@@ -10,7 +10,7 @@ export default defineConfig({
   manifest: {
     name: 'Cache Cleaner',
     description:
-      "Full control over your browsing data — pick exactly what to clear (cache, cookies, storage, service workers, history, and more) globally or for just the site you're on.",
+      'Full control over your browsing data — clear cache, cookies, storage, service workers, and history globally or per site.',
     author: 'utopiaeh01@gmail.com' as unknown as { email: string },
     homepage_url: 'https://github.com/utopiaeh/cache-cleaner',
     minimum_chrome_version: '88',
