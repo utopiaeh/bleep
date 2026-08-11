@@ -12,6 +12,7 @@ export default defineConfig({
     description:
       'Full control over your browsing data — pick exactly what to clear (cache, cookies, storage, service workers, history, and more) globally or for just the site you\'re on.',
     author: { email: 'utopiaeh01@gmail.com' },
+    minimum_chrome_version: '88',
     permissions: ['storage', 'tabs', 'browsingData', 'scripting', 'history'],
     optional_host_permissions: ['*://*/*'],
     browser_specific_settings: {
