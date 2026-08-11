@@ -1,5 +1,5 @@
-import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'wxt';
 
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
@@ -10,15 +10,22 @@ export default defineConfig({
   manifest: {
     name: 'Cache Cleaner',
     description:
-      'Full control over your browsing data — pick exactly what to clear (cache, cookies, storage, service workers, history, and more) globally or for just the site you\'re on.',
-    author: { email: 'utopiaeh01@gmail.com' },
+      "Full control over your browsing data — pick exactly what to clear (cache, cookies, storage, service workers, history, and more) globally or for just the site you're on.",
+    author: 'utopiaeh01@gmail.com' as unknown as { email: string },
+    homepage_url: 'https://github.com/utopiaeh/cache-cleaner',
     minimum_chrome_version: '88',
     permissions: ['storage', 'tabs', 'browsingData', 'scripting', 'history'],
     optional_host_permissions: ['*://*/*'],
     browser_specific_settings: {
       gecko: {
-        id: 'utopiaeh01@gmail.com',
-        strict_min_version: '109.0',
+        id: 'cache-cleaner@utopiaeh',
+        strict_min_version: '140.0',
+        data_collection_permissions: {
+          required: ['none'],
+        },
+      },
+      gecko_android: {
+        strict_min_version: '142.0',
       },
     },
   },

@@ -62,7 +62,7 @@ Store listing needs:
   markdown).
 - **License** — pick one in the submission flow (or "All Rights Reserved").
 - Firefox's review checks `browser_specific_settings.gecko.id` matches the
-  submission and `strict_min_version` (currently `109.0`) is accurate for
+  submission and `strict_min_version` (currently `128.0`) is accurate for
   the MV3 APIs used.
 
 AMO review is typically automated + fast for extensions with no remote

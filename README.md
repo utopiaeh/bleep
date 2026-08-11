@@ -75,7 +75,7 @@ required permission, so it's not requested at install time.
 | Browser                                             | Minimum version | Notes                                                                          |
 | --------------------------------------------------- | --------------- | ------------------------------------------------------------------------------ |
 | Chrome / Chromium / Edge / Brave                    | 88+             | Manifest V3, `scripting` API, `browsingData` origin filtering                  |
-| Firefox                                             | 109+            | Manifest V3 support in Firefox; per-site clearing via content-script injection |
+| Firefox                                             | 128+            | `optional_host_permissions` support; per-site clearing via content-script injection |
 | Firefox-based forks (Zen, LibreWolf, Waterfox, ...) | Same as Firefox | Detected via `runtime.getBrowserInfo`                                          |
 
 Load unpacked for manual testing:
@@ -88,7 +88,7 @@ Load unpacked for manual testing:
 ## Versioning
 
 Releases follow [Semantic Versioning](https://semver.org/). Each tagged
-release on [GitHub Releases](https://github.com/utopiaeh/cache-gc/releases)
+release on [GitHub Releases](https://github.com/utopiaeh/cache-cleaner/releases)
 has auto-generated notes listing every commit since the last tag.
 
 ## Publishing
