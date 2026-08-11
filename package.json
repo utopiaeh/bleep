@@ -12,6 +12,9 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
@@ -24,7 +27,6 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@webext-core/fake-browser": "^2.0.1",
     "@wxt-dev/module-react": "^1.1.5",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",

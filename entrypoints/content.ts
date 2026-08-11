@@ -10,20 +10,26 @@ async function clearIndexedDb() {
   if (!indexedDB.databases) return;
   const dbs = await indexedDB.databases();
   await Promise.all(
-    dbs.map((db) => (db.name ? new Promise((res) => {
-      const req = indexedDB.deleteDatabase(db.name!);
-      req.onsuccess = req.onerror = req.onblocked = () => res(undefined);
-    }) : Promise.resolve())),
+    dbs.map((db) =>
+      db.name
+        ? new Promise((res) => {
+            const req = indexedDB.deleteDatabase(db.name!);
+            req.onsuccess = req.onerror = req.onblocked = () => res(undefined);
+          })
+        : Promise.resolve(),
+    ),
   );
 }
 
-function clearLocalAndSessionStorage() {
+function clearLocalStorage() {
   localStorage.clear();
+}
+
+function clearSessionStorage() {
   sessionStorage.clear();
 }
 
 function clearCookies() {
-  // ponytail: page-context cookie clear only reaches non-HttpOnly cookies for this origin's current path/domain.
   for (const cookie of document.cookie.split(';')) {
     const name = cookie.split('=')[0]?.trim();
     if (!name) continue;
@@ -40,19 +46,29 @@ async function clearServiceWorkers() {
 const HANDLERS: Record<DataTypeId, () => Promise<void> | void> = {
   cacheStorage: clearCacheStorage,
   indexedDB: clearIndexedDb,
-  localStorage: clearLocalAndSessionStorage,
+  localStorage: clearLocalStorage,
+  sessionStorage: clearSessionStorage,
   cookies: clearCookies,
   serviceWorkers: clearServiceWorkers,
-  cache: () => {}, // HTTP cache isn't reachable from page JS; global mode handles it via browsingData.
+  cache: () => {},
   history: () => {},
   downloads: () => {},
   formData: () => {},
 };
 
+declare global {
+  interface Window {
+    __cacheCleanerRegistered?: boolean;
+  }
+}
+
 export default defineContentScript({
   matches: [],
   registration: 'runtime',
   async main() {
+    if (window.__cacheCleanerRegistered) return;
+    window.__cacheCleanerRegistered = true;
+
     browser.runtime.onMessage.addListener(async (message) => {
       if (message?.type !== 'clear-site-storage') return;
       const ids: DataTypeId[] = message.ids ?? [];
