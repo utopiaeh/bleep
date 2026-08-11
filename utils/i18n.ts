@@ -39,10 +39,10 @@ const en = {
   reloadTabAfterClearing: 'Reload tab after clearing',
   clearActiveTabOnly: 'Clear active tab only',
   failedOrDenied: 'Failed / denied',
-  activeTabHint: 'Only the site open in this tab is affected. Asks for one-time site permission on first use.',
+  activeTabHint: 'Only the site open in this tab is affected.',
   clearAllSites: 'Clear all sites',
   yesClearEverything: 'Yes, clear everything',
-  allSitesHint: 'Applies to every site, not just this tab. No extra permission needed.',
+  allSitesHint: 'Applies to every site, not just this tab.',
   settings: 'Settings',
 
   // Settings page
@@ -111,7 +111,7 @@ const ru: typeof en = {
     'Затрагивает только сайт, открытый в этой вкладке. При первом использовании запросит разрешение.',
   clearAllSites: 'Очистить все сайты',
   yesClearEverything: 'Да, очистить всё',
-  allSitesHint: 'Применяется ко всем сайтам, не только к этой вкладке. Доп. разрешения не нужны.',
+  allSitesHint: 'Применяется ко всем сайтам, не только к этой вкладке.',
   settings: 'Настройки',
 
   settingsTitle: 'Cache Cleaner — Настройки',
@@ -179,7 +179,7 @@ const ro: typeof en = {
     'Afectează doar site-ul deschis în această filă. Va cere permisiune o singură dată la prima utilizare.',
   clearAllSites: 'Șterge toate site-urile',
   yesClearEverything: 'Da, șterge totul',
-  allSitesHint: 'Se aplică pentru toate site-urile, nu doar pentru această filă. Nu necesită permisiuni extra.',
+  allSitesHint: 'Se aplică pentru toate site-urile, nu doar pentru această filă.',
   settings: 'Setări',
 
   settingsTitle: 'Cache Cleaner — Setări',
@@ -247,7 +247,7 @@ const uk: typeof en = {
     'Стосується лише сайту, відкритого в цій вкладці. При першому використанні запитає дозвіл.',
   clearAllSites: 'Очистити всі сайти',
   yesClearEverything: 'Так, очистити все',
-  allSitesHint: 'Застосовується до всіх сайтів, не лише до цієї вкладки. Додаткові дозволи не потрібні.',
+  allSitesHint: 'Застосовується до всіх сайтів, не лише до цієї вкладки.',
   settings: 'Налаштування',
 
   settingsTitle: 'Cache Cleaner — Налаштування',
