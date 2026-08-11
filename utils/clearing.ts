@@ -51,14 +51,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-/**
- * Runs directly in the page's own main-world JS realm (not the content-script
- * isolated world) — some sites hang calling indexedDB.databases() from an
- * isolated-world content script even though the same call resolves instantly
- * from the page's own console. Each type gets its own timeout so one stuck
- * type can't block the rest, and this function must stay fully self-contained
- * (no closures over outer scope) since it's serialized and injected as-is.
- */
 async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string, string> }> {
   function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return new Promise((resolve, reject) => {
