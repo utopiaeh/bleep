@@ -15,8 +15,8 @@ interface StatusButtonProps {
 }
 
 const VARIANT_CLASSES: Record<NonNullable<StatusButtonProps['variant']>, string> = {
-  primary: 'bg-blue-600 hover:bg-blue-500 font-medium',
-  secondary: 'border border-neutral-700 hover:bg-neutral-800',
+  primary: 'bg-blue-600 hover:bg-blue-500 text-white font-medium',
+  secondary: 'border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800',
 };
 
 export function StatusButton({

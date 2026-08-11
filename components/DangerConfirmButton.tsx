@@ -48,13 +48,13 @@ export function DangerConfirmButton({
       <div className="flex gap-2">
         <button
           onClick={confirm}
-          className="flex-1 rounded-md cursor-pointer bg-red-600 hover:bg-red-500 py-2 text-sm font-medium"
+          className="flex-1 rounded-md cursor-pointer bg-red-600 hover:bg-red-500 text-white py-2 text-sm font-medium"
         >
           {confirmLabel}
         </button>
         <button
           onClick={cancel}
-          className="rounded-md cursor-pointer border border-neutral-700 hover:bg-neutral-800 px-3 py-2 text-sm"
+          className="rounded-md cursor-pointer border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 px-3 py-2 text-sm"
         >
           Cancel
         </button>

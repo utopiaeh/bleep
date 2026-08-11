@@ -6,6 +6,7 @@ import { HistoryList } from '../../components/HistoryList';
 import { type ClearStatus } from '../../components/StatusButton';
 import { TabClearList } from '../../components/TabClearList';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
+import { useTheme } from '../../hooks/useTheme';
 import { useSettingsStore } from '../../store/settings';
 import { isGeckoBased } from '../../utils/browser-info';
 import {
@@ -21,6 +22,7 @@ import { DATA_TYPES } from '../../utils/data-types';
 type Tab = Browser.tabs.Tab;
 
 export default function App() {
+  useTheme();
   const {
     selectedTypes,
     toggleType,
@@ -28,6 +30,8 @@ export default function App() {
     setScopeMode,
     autoReloadAfterClear,
     setAutoReloadAfterClear,
+    theme,
+    setTheme,
     resetSettings,
   } = useSettingsStore();
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -137,20 +141,41 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-neutral-950">
-      <div className="text-neutral-100 p-8 max-w-3xl mx-auto">
+    <div className="min-h-screen w-full bg-white dark:bg-neutral-950">
+      <div className="text-neutral-900 dark:text-neutral-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">Cache Cleaner — Settings</h1>
           <button
             onClick={resetSettings}
-            className="rounded-md border border-neutral-700 hover:bg-neutral-800 cursor-pointer px-3 py-1.5 text-xs"
+            className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1.5 text-xs"
           >
             Reset to defaults
           </button>
         </div>
 
         <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-400 mb-2">Behavior</h2>
+          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+            Theme
+          </h2>
+          <div className="flex gap-4">
+            {(['system', 'light', 'dark'] as const).map((t) => (
+              <label key={t} className="flex items-center gap-2 text-sm cursor-pointer capitalize">
+                <input
+                  type="radio"
+                  checked={theme === t}
+                  onChange={() => setTheme(t)}
+                  className="cursor-pointer"
+                />
+                {t}
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+            Behavior
+          </h2>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input
               type="checkbox"
@@ -163,7 +188,7 @@ export default function App() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-400 mb-2">Data types</h2>
+          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">Data types</h2>
           <DataTypeGrid
             types={DATA_TYPES}
             selected={selectedTypes}
@@ -188,7 +213,7 @@ export default function App() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-400 mb-2">Scope</h2>
+          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">Scope</h2>
           <div className="flex gap-6 mb-4">
             <label className="flex items-start gap-2 text-sm max-w-xs cursor-pointer">
               <input
@@ -245,12 +270,12 @@ export default function App() {
                   value={siteFilter}
                   onChange={(e) => setSiteFilter(e.target.value)}
                   placeholder="Filter open tabs by domain…"
-                  className="flex-1 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm placeholder:text-neutral-500 focus:outline-none focus:border-blue-500"
+                  className="flex-1 rounded-md border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900 px-3 py-1.5 text-sm placeholder:text-neutral-500 focus:outline-none focus:border-blue-500"
                 />
                 <button
                   onClick={handleClearAllTabs}
                   disabled={bulkStatus === 'clearing' || filteredTabs.length === 0}
-                  className="rounded-md bg-blue-600 hover:bg-blue-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1.5 text-xs font-medium whitespace-nowrap"
+                  className="rounded-md bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1.5 text-xs font-medium whitespace-nowrap"
                 >
                   {bulkStatus === 'clearing'
                     ? 'Clearing…'
@@ -275,7 +300,7 @@ export default function App() {
 
         {selectedTypes.includes('history') && (
           <section>
-            <h2 className="text-sm uppercase tracking-wide text-neutral-400 mb-2">Recent history</h2>
+            <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">Recent history</h2>
             <HistoryList items={history} onDelete={handleDeleteHistoryItem} />
           </section>
         )}
