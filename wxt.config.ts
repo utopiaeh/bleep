@@ -7,14 +7,20 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
-  manifest: {
+  manifest: ({ browser }) => ({
     name: 'Cache Cleaner',
     description:
       'Full control over your browsing data — clear cache, cookies, storage, service workers, and history globally or per site.',
     author: 'utopiaeh01@gmail.com' as unknown as { email: string },
     homepage_url: 'https://github.com/utopiaeh/cache-cleaner',
     minimum_chrome_version: '88',
-    permissions: ['storage', 'tabs', 'browsingData', 'scripting', 'history'],
+    permissions: [
+      'storage',
+      'tabs',
+      'browsingData',
+      'history',
+      ...(browser === 'firefox' ? (['scripting'] as const) : []),
+    ],
     optional_host_permissions: ['*://*/*'],
     browser_specific_settings: {
       gecko: {
@@ -28,5 +34,5 @@ export default defineConfig({
         strict_min_version: '142.0',
       },
     },
-  },
+  }),
 });

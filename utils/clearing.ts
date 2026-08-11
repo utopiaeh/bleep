@@ -51,27 +51,96 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string, string> }> {
+  function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms);
+      promise.then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+      );
+    });
+  }
+
+  const handlers: Record<string, () => Promise<void> | void> = {
+    async cacheStorage() {
+      if (!('caches' in self)) return;
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    },
+    async indexedDB() {
+      if (!indexedDB.databases) return;
+      const dbs = await indexedDB.databases();
+      await Promise.all(
+        dbs.map((db) =>
+          db.name
+            ? new Promise((res) => {
+                const req = indexedDB.deleteDatabase(db.name!);
+                req.onsuccess = req.onerror = req.onblocked = () => res(undefined);
+              })
+            : Promise.resolve(),
+        ),
+      );
+    },
+    localStorage() {
+      localStorage.clear();
+    },
+    sessionStorage() {
+      sessionStorage.clear();
+    },
+    cookies() {
+      for (const cookie of document.cookie.split(';')) {
+        const name = cookie.split('=')[0]?.trim();
+        if (!name) continue;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+      }
+    },
+    async serviceWorkers() {
+      if (!('serviceWorker' in navigator)) return;
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((r) => r.unregister()));
+    },
+  };
+
+  const results = await Promise.allSettled(
+    ids.map(async (id) => {
+      await withTimeout(Promise.resolve(handlers[id]?.()), 8000);
+      return id;
+    }),
+  );
+  const failed: Record<string, string> = {};
+  results.forEach((result, i) => {
+    if (result.status === 'rejected') failed[ids[i]!] = String(result.reason);
+  });
+  return { failed };
+}
+
 export async function clearSiteViaContentScript(tabId: number, ids: DataTypeId[]): Promise<void> {
   await withTimeout(
     (async () => {
-      await browser.scripting.executeScript({
+      const [injection] = await browser.scripting.executeScript({
         target: { tabId },
-        files: ['/content-scripts/content.js'],
+        world: 'MAIN',
+        func: clearInMainWorld,
+        args: [siteScopedIds(ids)],
       });
-      await browser.tabs.sendMessage(tabId, {
-        type: 'clear-site-storage',
-        ids: siteScopedIds(ids),
-      });
+      const failed = injection?.result?.failed;
+      if (failed && Object.keys(failed).length > 0) {
+        console.error('Cache Cleaner: some data types failed to clear', failed);
+      }
     })(),
-    5000,
+    15000,
   );
 }
 
 export async function requestOriginPermission(): Promise<boolean> {
-  const pattern = { origins: ['*://*/*'] };
-  const already = await browser.permissions.contains(pattern);
-  if (already) return true;
-  return browser.permissions.request(pattern);
+  return browser.permissions.request({ origins: ['*://*/*'] });
 }
 
 export function tabOrigin(tab: { url?: string }): string | null {
