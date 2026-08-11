@@ -9,7 +9,15 @@
       "Bash(ls -la && rm -rf /tmp/cc-scaffold)",
       "Bash(yarn install *)",
       "Bash(yarn add *)",
-      "Bash(npm view *)"
+      "Bash(npm view *)",
+      "Bash(yarn test *)",
+      "Bash(node -e \"console.log\\(Object.keys\\(require\\('/Users/utopiaeh/Developer/cache-cleaner/node_modules/wxt/package.json'\\).exports\\)\\)\")",
+      "Bash(yarn remove *)",
+      "Bash(yarn lint *)",
+      "Bash(yarn build *)",
+      "Bash(yarn build:firefox)",
+      "Bash(yarn compile *)",
+      "Bash(python3 -m json.tool)"
     ]
   }
 }

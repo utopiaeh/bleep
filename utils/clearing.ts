@@ -83,6 +83,15 @@ export function tabOrigin(tab: { url?: string }): string | null {
   }
 }
 
+export function tabDomain(tab: { url?: string }): string | null {
+  if (!tab.url) return null;
+  try {
+    return new URL(tab.url).hostname;
+  } catch {
+    return null;
+  }
+}
+
 export async function clearTabData(
   tab: { id?: number; url?: string },
   ids: DataTypeId[],
