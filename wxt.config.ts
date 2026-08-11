@@ -9,12 +9,14 @@ export default defineConfig({
   }),
   manifest: {
     name: 'Cache Cleaner',
-    description: 'Clear cache, storage, and browsing data — globally or per-site.',
+    description:
+      'Full control over your browsing data — pick exactly what to clear (cache, cookies, storage, service workers, history, and more) globally or for just the site you\'re on.',
+    author: { email: 'utopiaeh01@gmail.com' },
     permissions: ['storage', 'tabs', 'browsingData', 'scripting', 'history'],
     optional_host_permissions: ['*://*/*'],
     browser_specific_settings: {
       gecko: {
-        id: 'cache-cleaner@flow48.com',
+        id: 'utopiaeh01@gmail.com',
         strict_min_version: '109.0',
       },
     },

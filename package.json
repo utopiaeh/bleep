@@ -1,8 +1,9 @@
 {
-  "name": "wxt-react-starter",
-  "description": "manifest.json description",
+  "name": "cache-cleaner",
+  "description": "Clear cache, storage, and browsing data — globally or per-site.",
+  "author": "utopiaeh01@gmail.com",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
