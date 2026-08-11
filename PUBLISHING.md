@@ -71,18 +71,12 @@ code and a clear permission set, which this qualifies for.
 ## Privacy policy
 
 Both stores require one once `history` or broad host permissions are
-requested. Minimum viable version, since this extension collects nothing
-and has no backend:
+requested. See [PRIVACY.md](./PRIVACY.md) — link it directly (GitHub
+renders it as a page):
 
-> This extension does not collect, store, or transmit any user data to any
-> server. All actions (clearing cache, cookies, storage, or history) happen
-> entirely within your browser via the standard WebExtension APIs, and your
-> settings are stored locally on your device using the browser's own
-> storage API. No analytics, telemetry, or remote code of any kind is
-> included.
-
-Host it as a GitHub Pages page, a gist, or a page in this repo (e.g.
-`PRIVACY.md` rendered via GitHub) and link it in both dashboards.
+```
+https://github.com/utopiaeh/cache-cleaner/blob/main/PRIVACY.md
+```
 
 ## Permission justifications (copy-paste starting point)
 
