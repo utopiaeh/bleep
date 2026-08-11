@@ -149,7 +149,10 @@ export default function App() {
     <div className="min-h-screen w-full bg-white dark:bg-neutral-950">
       <div className="text-neutral-900 dark:text-neutral-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">{t('settingsTitle')}</h1>
+          <div className="flex items-center gap-3">
+            <img src="/icon/48.png" alt="" className="w-8 h-8" />
+            <h1 className="text-2xl font-semibold">{t('settingsTitle')}</h1>
+          </div>
           <button
             onClick={resetSettings}
             className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1.5 text-xs"

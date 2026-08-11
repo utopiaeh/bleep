@@ -74,7 +74,10 @@ export default function App() {
 
   return (
     <div className="w-86 p-4 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
-      <h1 className="text-lg font-semibold mb-3">{t('popupTitle')}</h1>
+      <div className="flex items-center gap-2 mb-3">
+        <img src="/icon/48.png" alt="" className="w-6 h-6" />
+        <h1 className="text-lg font-semibold">{t('popupTitle')}</h1>
+      </div>
 
       <DataTypeGrid
         types={QUICK_TYPES}
