@@ -72,7 +72,7 @@ export default function App() {
       await clearGlobal(selectedTypes);
       setGlobalStatus('done');
     } catch (err) {
-      console.error('Cache Cleaner: global clear failed', err);
+      console.error('Bleep: global clear failed', err);
       setGlobalStatus('failed');
     }
     setTimeout(() => setGlobalStatus('idle'), 1500);
@@ -94,7 +94,7 @@ export default function App() {
         browser.tabs.reload(tab.id);
       }
     } catch (err) {
-      console.error('Cache Cleaner: site clear failed', err);
+      console.error('Bleep: site clear failed', err);
       setFailedTabIds((s) => new Set(s).add(tab.id!));
     }
     setBusyTabIds((s) => {
@@ -133,7 +133,7 @@ export default function App() {
       setFailedTabIds(failed);
       setBulkStatus(failed.size === 0 ? 'done' : 'failed');
     } catch (err) {
-      console.error('Cache Cleaner: clear-all-tabs failed', err);
+      console.error('Bleep: clear-all-tabs failed', err);
       setBulkStatus('failed');
     }
     setBusyTabIds(new Set());

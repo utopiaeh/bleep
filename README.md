@@ -1,4 +1,4 @@
-# Cache Cleaner
+# Bleep - Fast Global & Tab Cache Cleaner
 
 A browser extension for clearing cache, cookies, storage, history, and other
 browsing data — either globally across every site, or scoped to just the one
@@ -88,7 +88,7 @@ Load unpacked for manual testing:
 ## Versioning
 
 Releases follow [Semantic Versioning](https://semver.org/). Each tagged
-release on [GitHub Releases](https://github.com/utopiaeh/cache-cleaner/releases)
+release on [GitHub Releases](https://github.com/utopiaeh/bleep/releases)
 has auto-generated notes listing every commit since the last tag.
 
 ## Publishing

@@ -35,7 +35,7 @@ const en = {
   globalOnly: '(global only)',
 
   // Popup
-  popupTitle: 'Cache Cleaner',
+  popupTitle: 'Bleep',
   reloadTabAfterClearing: 'Reload tab after clearing',
   clearActiveTabOnly: 'Clear active tab only',
   failedOrDenied: 'Failed / denied',
@@ -46,7 +46,7 @@ const en = {
   settings: 'Settings',
 
   // Settings page
-  settingsTitle: 'Cache Cleaner — Settings',
+  settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Settings',
   resetToDefaults: 'Reset to defaults',
   theme: 'Theme',
   themeSystem: 'System',
@@ -103,7 +103,7 @@ const ru: typeof en = {
   cancel: 'Отмена',
   globalOnly: '(только глобально)',
 
-  popupTitle: 'Cache Cleaner',
+  popupTitle: 'Bleep',
   reloadTabAfterClearing: 'Обновить вкладку после очистки',
   clearActiveTabOnly: 'Очистить текущую вкладку',
   failedOrDenied: 'Ошибка / отказано',
@@ -114,7 +114,7 @@ const ru: typeof en = {
   allSitesHint: 'Применяется ко всем сайтам, не только к этой вкладке.',
   settings: 'Настройки',
 
-  settingsTitle: 'Cache Cleaner — Настройки',
+  settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Настройки',
   resetToDefaults: 'Сбросить настройки',
   theme: 'Тема',
   themeSystem: 'Системная',
@@ -171,7 +171,7 @@ const ro: typeof en = {
   cancel: 'Anulează',
   globalOnly: '(doar global)',
 
-  popupTitle: 'Cache Cleaner',
+  popupTitle: 'Bleep',
   reloadTabAfterClearing: 'Reîncarcă fila după ștergere',
   clearActiveTabOnly: 'Șterge doar fila activă',
   failedOrDenied: 'Eroare / refuzat',
@@ -182,7 +182,7 @@ const ro: typeof en = {
   allSitesHint: 'Se aplică pentru toate site-urile, nu doar pentru această filă.',
   settings: 'Setări',
 
-  settingsTitle: 'Cache Cleaner — Setări',
+  settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Setări',
   resetToDefaults: 'Resetează la valorile implicite',
   theme: 'Temă',
   themeSystem: 'Sistem',
@@ -239,7 +239,7 @@ const uk: typeof en = {
   cancel: 'Скасувати',
   globalOnly: '(лише глобально)',
 
-  popupTitle: 'Cache Cleaner',
+  popupTitle: 'Bleep',
   reloadTabAfterClearing: 'Оновити вкладку після очищення',
   clearActiveTabOnly: 'Очистити лише поточну вкладку',
   failedOrDenied: 'Помилка / відмовлено',
@@ -250,7 +250,7 @@ const uk: typeof en = {
   allSitesHint: 'Застосовується до всіх сайтів, не лише до цієї вкладки.',
   settings: 'Налаштування',
 
-  settingsTitle: 'Cache Cleaner — Налаштування',
+  settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Налаштування',
   resetToDefaults: 'Скинути налаштування',
   theme: 'Тема',
   themeSystem: 'Системна',

@@ -75,7 +75,7 @@ requested. See [PRIVACY.md](./PRIVACY.md) — link it directly (GitHub
 renders it as a page):
 
 ```
-https://github.com/utopiaeh/cache-cleaner/blob/main/PRIVACY.md
+https://github.com/utopiaeh/bleep/blob/main/PRIVACY.md
 ```
 
 ## Permission justifications (copy-paste starting point)

@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Cache Cleaner does not collect, store, or transmit any user data to any
+Bleep does not collect, store, or transmit any user data to any
 server.
 
 All actions performed by this extension — clearing cache, cookies,
