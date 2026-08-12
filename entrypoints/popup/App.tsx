@@ -41,7 +41,7 @@ export default function App() {
       await clearGlobal(selectedTypes);
       setStatus('done');
     } catch (err) {
-      console.error('Cache Cleaner: global clear failed', err);
+      console.error('Bleep: global clear failed', err);
       setStatus('failed');
     }
     setTimeout(() => setStatus('idle'), 1500);
@@ -66,7 +66,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      console.error('Cache Cleaner: active tab clear failed', err);
+      console.error('Bleep: active tab clear failed', err);
       setTabStatus('failed');
     }
     setTimeout(() => setTabStatus('idle'), 1500);

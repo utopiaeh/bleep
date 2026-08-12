@@ -8,11 +8,11 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: ({ browser }) => ({
-    name: 'Cache Cleaner',
+    name: 'Bleep',
     description:
       'Full control over your browsing data — clear cache, cookies, storage, service workers, and history globally or per site.',
     author: 'utopiaeh01@gmail.com' as unknown as { email: string },
-    homepage_url: 'https://github.com/utopiaeh/cache-cleaner',
+    homepage_url: 'https://github.com/utopiaeh/bleep',
     minimum_chrome_version: '88',
     permissions: [
       'storage',
@@ -29,9 +29,6 @@ export default defineConfig({
         data_collection_permissions: {
           required: ['none'],
         },
-      },
-      gecko_android: {
-        strict_min_version: '142.0',
       },
     },
   }),

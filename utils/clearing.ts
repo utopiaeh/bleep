@@ -132,7 +132,7 @@ export async function clearSiteViaContentScript(tabId: number, ids: DataTypeId[]
       });
       const failed = injection?.result?.failed;
       if (failed && Object.keys(failed).length > 0) {
-        console.error('Cache Cleaner: some data types failed to clear', failed);
+        console.error('Bleep: some data types failed to clear', failed);
       }
     })(),
     15000,
