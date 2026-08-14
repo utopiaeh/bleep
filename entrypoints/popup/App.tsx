@@ -13,15 +13,19 @@ import {
   requestOriginPermission,
   siteScopedIds,
 } from '../../utils/clearing';
+import { isGeckoBased } from '../../utils/browser-info';
 import { DATA_TYPES } from '../../utils/data-types';
 
-const QUICK_TYPES = DATA_TYPES.filter((t) => t.quick);
+const QUICK_TYPES = DATA_TYPES.filter(
+  (t) => t.quick && t.siteScoped && !(t.id === 'cache' && isGeckoBased()),
+);
 
 export default function App() {
   useTheme();
   const t = useTranslation();
-  const selectedTypes = useSettingsStore((s) => s.selectedTypes);
-  const toggleType = useSettingsStore((s) => s.toggleType);
+  const selectedTypesSite = useSettingsStore((s) => s.selectedTypesSite);
+  const toggleTypeSite = useSettingsStore((s) => s.toggleTypeSite);
+  const selectedTypesGlobal = useSettingsStore((s) => s.selectedTypesGlobal);
   const autoReloadAfterClear = useSettingsStore((s) => s.autoReloadAfterClear);
   const setAutoReloadAfterClear = useSettingsStore((s) => s.setAutoReloadAfterClear);
   const [status, setStatus] = useState<ClearStatus>('idle');
@@ -38,7 +42,7 @@ export default function App() {
   async function handleClear() {
     setStatus('clearing');
     try {
-      await clearGlobal(selectedTypes);
+      await clearGlobal(selectedTypesGlobal);
       setStatus('done');
     } catch (err) {
       console.error('Bleep: global clear failed', err);
@@ -55,12 +59,12 @@ export default function App() {
       if (isReloading(activeTab?.id)) {
         setTabStatus('failed');
       } else {
-        const ids = siteScopedIds(selectedTypes);
+        const ids = siteScopedIds(selectedTypesSite);
         const ok = granted && activeTab ? await clearTabData(activeTab, ids) : false;
         setTabStatus(ok ? 'done' : 'failed');
         if (ok && autoReloadAfterClear && activeTab?.id != null) {
           markReloading(activeTab.id);
-          browser.tabs.reload(activeTab.id);
+          browser.tabs.reload(activeTab.id, { bypassCache: true });
         }
       }
     } catch (err) {
@@ -79,8 +83,8 @@ export default function App() {
 
       <DataTypeGrid
         types={QUICK_TYPES}
-        selected={selectedTypes}
-        onToggle={toggleType}
+        selected={selectedTypesSite}
+        onToggle={toggleTypeSite}
         className="mb-3"
       />
 

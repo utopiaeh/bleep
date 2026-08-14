@@ -32,11 +32,10 @@ const en = {
   cleared: 'Cleared ✓',
   failed: 'Failed',
   cancel: 'Cancel',
-  globalOnly: '(global only)',
 
   // Popup
   popupTitle: 'Bleep - Cache Cleaner',
-  reloadTabAfterClearing: 'Reload tab after clearing',
+  reloadTabAfterClearing: 'Hard reload tab after clearing',
   clearActiveTabOnly: 'Clear active tab only',
   failedOrDenied: 'Failed / denied',
   activeTabHint: 'Only the site open in this tab is affected.',
@@ -48,6 +47,8 @@ const en = {
   // Settings page
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Settings',
   resetToDefaults: 'Reset to defaults',
+  save: 'Save',
+  saved: 'Saved ✓',
   theme: 'Theme',
   themeSystem: 'System',
   themeLight: 'Light',
@@ -58,14 +59,9 @@ const en = {
   languageRussian: 'Russian',
   languageRomanian: 'Romanian',
   languageUkrainian: 'Ukrainian',
-  behavior: 'Behavior',
-  reloadTabAfterClearingPerSite: 'Reload tab after clearing (per-site only)',
-  dataTypes: 'Data types',
-  siteScopeNote:
-    "History, Download History, and Form Data can't be scoped to one site — they only clear in Global mode.",
+  reloadTabAfterClearingPerSite: 'Hard reload tab after clearing (per-site only)',
   storageKeyShareNote:
     'Local Storage and Session Storage share one browser API in Global mode — checking either one clears both.',
-  scope: 'Scope',
   scopeGlobal: 'Global',
   scopeGlobalDescription:
     "Clears the checked types for every site you've visited, not just the one you're on. No extra permission needed.",
@@ -99,10 +95,9 @@ const ru: typeof en = {
   cleared: 'Очищено ✓',
   failed: 'Ошибка',
   cancel: 'Отмена',
-  globalOnly: '(только глобально)',
 
   popupTitle: 'Bleep - Cache Cleaner',
-  reloadTabAfterClearing: 'Обновить вкладку после очистки',
+  reloadTabAfterClearing: 'Жёстко обновить вкладку после очистки',
   clearActiveTabOnly: 'Очистить текущую вкладку',
   failedOrDenied: 'Ошибка / отказано',
   activeTabHint:
@@ -114,6 +109,8 @@ const ru: typeof en = {
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Настройки',
   resetToDefaults: 'Сбросить настройки',
+  save: 'Сохранить',
+  saved: 'Сохранено ✓',
   theme: 'Тема',
   themeSystem: 'Системная',
   themeLight: 'Светлая',
@@ -124,14 +121,9 @@ const ru: typeof en = {
   languageRussian: 'Русский',
   languageRomanian: 'Румынский',
   languageUkrainian: 'Украинский',
-  behavior: 'Поведение',
-  reloadTabAfterClearingPerSite: 'Обновить вкладку после очистки (только для сайта)',
-  dataTypes: 'Типы данных',
-  siteScopeNote:
-    'История, история загрузок и данные форм нельзя очистить только для одного сайта — они очищаются только в глобальном режиме.',
+  reloadTabAfterClearingPerSite: 'Жёстко обновить вкладку после очистки (только для сайта)',
   storageKeyShareNote:
     'Локальное хранилище и хранилище сессии используют один и тот же API браузера в глобальном режиме — отметка любого из них очищает оба.',
-  scope: 'Область',
   scopeGlobal: 'Глобально',
   scopeGlobalDescription:
     'Очищает отмеченные типы для всех посещённых сайтов, а не только для текущего. Доп. разрешения не нужны.',
@@ -165,10 +157,9 @@ const ro: typeof en = {
   cleared: 'Șters ✓',
   failed: 'Eroare',
   cancel: 'Anulează',
-  globalOnly: '(doar global)',
 
   popupTitle: 'Bleep - Cache Cleaner',
-  reloadTabAfterClearing: 'Reîncarcă fila după ștergere',
+  reloadTabAfterClearing: 'Reîncarcă forțat fila după ștergere',
   clearActiveTabOnly: 'Șterge doar fila activă',
   failedOrDenied: 'Eroare / refuzat',
   activeTabHint:
@@ -180,6 +171,8 @@ const ro: typeof en = {
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Setări',
   resetToDefaults: 'Resetează la valorile implicite',
+  save: 'Salvează',
+  saved: 'Salvat ✓',
   theme: 'Temă',
   themeSystem: 'Sistem',
   themeLight: 'Luminoasă',
@@ -190,14 +183,9 @@ const ro: typeof en = {
   languageRussian: 'Rusă',
   languageRomanian: 'Română',
   languageUkrainian: 'Ucraineană',
-  behavior: 'Comportament',
-  reloadTabAfterClearingPerSite: 'Reîncarcă fila după ștergere (doar per site)',
-  dataTypes: 'Tipuri de date',
-  siteScopeNote:
-    'Istoricul, istoricul descărcărilor și datele formularelor nu pot fi limitate la un singur site — se șterg doar în modul Global.',
+  reloadTabAfterClearingPerSite: 'Reîncarcă forțat fila după ștergere (doar per site)',
   storageKeyShareNote:
     'Stocarea locală și stocarea sesiunii folosesc același API al browserului în modul Global — bifarea uneia le șterge pe ambele.',
-  scope: 'Domeniu de acțiune',
   scopeGlobal: 'Global',
   scopeGlobalDescription:
     'Șterge tipurile bifate pentru toate site-urile vizitate, nu doar pentru cel curent. Nu necesită permisiuni extra.',
@@ -231,10 +219,9 @@ const uk: typeof en = {
   cleared: 'Очищено ✓',
   failed: 'Помилка',
   cancel: 'Скасувати',
-  globalOnly: '(лише глобально)',
 
   popupTitle: 'Bleep - Cache Cleaner',
-  reloadTabAfterClearing: 'Оновити вкладку після очищення',
+  reloadTabAfterClearing: 'Жорстко оновити вкладку після очищення',
   clearActiveTabOnly: 'Очистити лише поточну вкладку',
   failedOrDenied: 'Помилка / відмовлено',
   activeTabHint:
@@ -246,6 +233,8 @@ const uk: typeof en = {
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Налаштування',
   resetToDefaults: 'Скинути налаштування',
+  save: 'Зберегти',
+  saved: 'Збережено ✓',
   theme: 'Тема',
   themeSystem: 'Системна',
   themeLight: 'Світла',
@@ -256,14 +245,9 @@ const uk: typeof en = {
   languageRussian: 'Російська',
   languageRomanian: 'Румунська',
   languageUkrainian: 'Українська',
-  behavior: 'Поведінка',
-  reloadTabAfterClearingPerSite: 'Оновити вкладку після очищення (лише для сайту)',
-  dataTypes: 'Типи даних',
-  siteScopeNote:
-    'Історію, історію завантажень і дані форм неможливо очистити лише для одного сайту — вони очищаються лише в глобальному режимі.',
+  reloadTabAfterClearingPerSite: 'Жорстко оновити вкладку після очищення (лише для сайту)',
   storageKeyShareNote:
     'Локальне сховище та сховище сесії використовують один і той самий API браузера в глобальному режимі — позначення будь-якого з них очищає обидва.',
-  scope: 'Область',
   scopeGlobal: 'Глобально',
   scopeGlobalDescription:
     'Очищає позначені типи для всіх відвіданих сайтів, а не лише для поточного. Додаткові дозволи не потрібні.',

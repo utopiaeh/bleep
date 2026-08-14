@@ -1,54 +1,50 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { siteScopedIds } from '../utils/clearing';
 import type { DataTypeId } from '../utils/data-types';
 import type { Language } from '../utils/i18n';
 import { browserLocalStorage } from '../utils/storage-adapter';
 
-export type ScopeMode = 'global' | 'site';
 export type Theme = 'system' | 'light' | 'dark';
 
-const DEFAULTS = {
-  selectedTypes: ['cacheStorage', 'cache', 'indexedDB', 'localStorage', 'sessionStorage'] as DataTypeId[],
-  scopeMode: 'site' as ScopeMode,
+const DEFAULT_TYPES: DataTypeId[] = ['cacheStorage', 'cache', 'indexedDB', 'localStorage', 'sessionStorage'];
+
+export const DEFAULTS = {
+  selectedTypesGlobal: DEFAULT_TYPES,
+  selectedTypesSite: DEFAULT_TYPES,
   autoReloadAfterClear: true,
   theme: 'system' as Theme,
   language: 'auto' as Language,
 };
 
 interface SettingsState {
-  selectedTypes: DataTypeId[];
-  scopeMode: ScopeMode;
+  selectedTypesGlobal: DataTypeId[];
+  selectedTypesSite: DataTypeId[];
   autoReloadAfterClear: boolean;
   theme: Theme;
   language: Language;
-  toggleType: (id: DataTypeId) => void;
-  setScopeMode: (mode: ScopeMode) => void;
+  toggleTypeSite: (id: DataTypeId) => void;
+  setSelectedTypesGlobal: (ids: DataTypeId[]) => void;
+  setSelectedTypesSite: (ids: DataTypeId[]) => void;
   setAutoReloadAfterClear: (value: boolean) => void;
   setTheme: (theme: Theme) => void;
   setLanguage: (language: Language) => void;
-  resetSettings: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       ...DEFAULTS,
-      toggleType: (id) => {
-        const current = get().selectedTypes;
+      toggleTypeSite: (id) => {
+        const current = get().selectedTypesSite;
         set({
-          selectedTypes: current.includes(id) ? current.filter((t) => t !== id) : [...current, id],
+          selectedTypesSite: current.includes(id) ? current.filter((t) => t !== id) : [...current, id],
         });
       },
-      setScopeMode: (mode) =>
-        set({
-          scopeMode: mode,
-          selectedTypes: mode === 'site' ? siteScopedIds(get().selectedTypes) : get().selectedTypes,
-        }),
+      setSelectedTypesGlobal: (ids) => set({ selectedTypesGlobal: ids }),
+      setSelectedTypesSite: (ids) => set({ selectedTypesSite: ids }),
       setAutoReloadAfterClear: (value) => set({ autoReloadAfterClear: value }),
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
-      resetSettings: () => set(DEFAULTS),
     }),
     {
       name: 'cache-cleaner-settings',

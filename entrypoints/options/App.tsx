@@ -8,7 +8,7 @@ import { TabClearList } from '../../components/TabClearList';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useSettingsStore } from '../../store/settings';
+import { DEFAULTS, useSettingsStore, type Theme } from '../../store/settings';
 import { isGeckoBased } from '../../utils/browser-info';
 import type { Language } from '../../utils/i18n';
 import {
@@ -19,26 +19,55 @@ import {
   siteScopedIds,
   tabDomain,
 } from '../../utils/clearing';
-import { DATA_TYPES } from '../../utils/data-types';
+import { DATA_TYPES, type DataTypeId } from '../../utils/data-types';
 
 type Tab = Browser.tabs.Tab;
+
+const SITE_TYPES = DATA_TYPES.filter((type) => type.siteScoped && !(type.id === 'cache' && isGeckoBased()));
+
+function sameIds(a: DataTypeId[], b: DataTypeId[]): boolean {
+  return [...a].sort().join(',') === [...b].sort().join(',');
+}
 
 export default function App() {
   useTheme();
   const t = useTranslation();
   const {
-    selectedTypes,
-    toggleType,
-    scopeMode,
-    setScopeMode,
+    selectedTypesGlobal,
+    selectedTypesSite,
     autoReloadAfterClear,
-    setAutoReloadAfterClear,
     theme,
-    setTheme,
     language,
+    setSelectedTypesGlobal,
+    setSelectedTypesSite,
+    setAutoReloadAfterClear,
+    setTheme,
     setLanguage,
-    resetSettings,
   } = useSettingsStore();
+
+  const [draftTheme, setDraftTheme] = useState<Theme>(() => useSettingsStore.getState().theme);
+  const [draftLanguage, setDraftLanguage] = useState<Language>(() => useSettingsStore.getState().language);
+  const [draftAutoReload, setDraftAutoReload] = useState(
+    () => useSettingsStore.getState().autoReloadAfterClear,
+  );
+  const [draftGlobal, setDraftGlobal] = useState<DataTypeId[]>(
+    () => useSettingsStore.getState().selectedTypesGlobal,
+  );
+  const [draftSite, setDraftSite] = useState<DataTypeId[]>(() => useSettingsStore.getState().selectedTypesSite);
+  // The popup writes selectedTypesSite directly (no save gate there). Until this
+  // page's Site selection is touched, show the live value instead of a stale
+  // snapshot — once touched, the draft takes over until saved or reset.
+  const [siteTouched, setSiteTouched] = useState(false);
+  const effectiveSite = siteTouched ? draftSite : selectedTypesSite;
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+
+  const isDirty =
+    draftTheme !== theme ||
+    draftLanguage !== language ||
+    draftAutoReload !== autoReloadAfterClear ||
+    !sameIds(draftGlobal, selectedTypesGlobal) ||
+    !sameIds(effectiveSite, selectedTypesSite);
+
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [siteFilter, setSiteFilter] = useState('');
   const [busyTabIds, setBusyTabIds] = useState<Set<number>>(new Set());
@@ -49,16 +78,16 @@ export default function App() {
   const { reloadingTabIds, markReloading, isReloading } = useReloadGuard();
 
   useEffect(() => {
-    if (scopeMode === 'site') {
+    if (!isGeckoBased()) {
       browser.tabs.query({}).then(setTabs);
     }
-  }, [scopeMode]);
+  }, []);
 
   useEffect(() => {
-    if (selectedTypes.includes('history')) {
+    if (selectedTypesGlobal.includes('history')) {
       browser.history.search({ text: '', maxResults: 25 }).then(setHistory);
     }
-  }, [selectedTypes]);
+  }, [selectedTypesGlobal]);
 
   const filteredTabs = useMemo(() => {
     const q = siteFilter.trim().toLowerCase();
@@ -66,10 +95,42 @@ export default function App() {
     return tabs.filter((tab) => (tabDomain(tab) ?? '').toLowerCase().includes(q));
   }, [tabs, siteFilter]);
 
+  function toggleDraftGlobal(id: DataTypeId) {
+    setDraftGlobal((current) => (current.includes(id) ? current.filter((t) => t !== id) : [...current, id]));
+  }
+
+  function toggleDraftSite(id: DataTypeId) {
+    setDraftSite((current) => {
+      const base = siteTouched ? current : effectiveSite;
+      return base.includes(id) ? base.filter((t) => t !== id) : [...base, id];
+    });
+    setSiteTouched(true);
+  }
+
+  function handleSave() {
+    setTheme(draftTheme);
+    setLanguage(draftLanguage);
+    setAutoReloadAfterClear(draftAutoReload);
+    setSelectedTypesGlobal(draftGlobal);
+    setSelectedTypesSite(effectiveSite);
+    setSiteTouched(false);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 1500);
+  }
+
+  function handleResetDraft() {
+    setDraftTheme(DEFAULTS.theme);
+    setDraftLanguage(DEFAULTS.language);
+    setDraftAutoReload(DEFAULTS.autoReloadAfterClear);
+    setDraftGlobal(DEFAULTS.selectedTypesGlobal);
+    setDraftSite(DEFAULTS.selectedTypesSite);
+    setSiteTouched(true);
+  }
+
   async function handleGlobalClear() {
     setGlobalStatus('clearing');
     try {
-      await clearGlobal(selectedTypes);
+      await clearGlobal(selectedTypesGlobal);
       setGlobalStatus('done');
     } catch (err) {
       console.error('Bleep: global clear failed', err);
@@ -87,12 +148,12 @@ export default function App() {
       return next;
     });
     try {
-      const ids = siteScopedIds(selectedTypes);
+      const ids = siteScopedIds(selectedTypesSite);
       const ok = await clearTab(tab, ids);
       if (!ok) setFailedTabIds((s) => new Set(s).add(tab.id!));
       else if (autoReloadAfterClear) {
         markReloading(tab.id);
-        browser.tabs.reload(tab.id);
+        browser.tabs.reload(tab.id, { bypassCache: true });
       }
     } catch (err) {
       console.error('Bleep: site clear failed', err);
@@ -116,7 +177,7 @@ export default function App() {
         setTimeout(() => setBulkStatus('idle'), 1500);
         return;
       }
-      const ids = siteScopedIds(selectedTypes);
+      const ids = siteScopedIds(selectedTypesSite);
       setBusyTabIds(new Set(targets.map((t) => t.id!)));
       const results = await Promise.allSettled(
         targets.map((tab) => clearTabData(tab, ids).then((ok) => ({ tab, ok }))),
@@ -128,7 +189,7 @@ export default function App() {
         if (!ok) failed.add(tab.id!);
         else if (autoReloadAfterClear) {
           markReloading(tab.id!);
-          browser.tabs.reload(tab.id!);
+          browser.tabs.reload(tab.id!, { bypassCache: true });
         }
       }
       setFailedTabIds(failed);
@@ -169,8 +230,8 @@ export default function App() {
               <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="radio"
-                  checked={theme === value}
-                  onChange={() => setTheme(value)}
+                  checked={draftTheme === value}
+                  onChange={() => setDraftTheme(value)}
                   className="cursor-pointer"
                 />
                 {label}
@@ -184,8 +245,8 @@ export default function App() {
             {t('language')}
           </h2>
           <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
+            value={draftLanguage}
+            onChange={(e) => setDraftLanguage(e.target.value as Language)}
             className="rounded-md border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900 px-3 py-1.5 text-sm cursor-pointer focus:outline-none focus:border-blue-500"
           >
             <option value="auto">{t('languageAuto')}</option>
@@ -198,81 +259,41 @@ export default function App() {
 
         <section className="mb-8">
           <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            {t('behavior')}
+            {t('scopeGlobal')}
           </h2>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <p className="text-xs text-neutral-500 mb-2">{t('scopeGlobalDescription')}</p>
+          <DataTypeGrid types={DATA_TYPES} selected={draftGlobal} onToggle={toggleDraftGlobal} className="mb-2" />
+          <p className="text-xs text-neutral-500 mb-3">{t('storageKeyShareNote')}</p>
+          <div className="max-w-xs">
+            <DangerConfirmButton
+              status={globalStatus}
+              idleLabel={t('clearAllSites')}
+              confirmLabel={t('yesClearEverything')}
+              onConfirm={handleGlobalClear}
+            />
+          </div>
+        </section>
+
+        <hr className="border-neutral-200 dark:border-neutral-800 mb-8" />
+
+        <section className="mb-8">
+          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+            {t('scopePerSite')}
+          </h2>
+          <p className="text-xs text-neutral-500 mb-2">{t('scopePerSiteDescription')}</p>
+          <DataTypeGrid types={SITE_TYPES} selected={effectiveSite} onToggle={toggleDraftSite} className="mb-3" />
+
+          <label className="flex items-center gap-2 text-sm cursor-pointer mb-3">
             <input
               type="checkbox"
-              checked={autoReloadAfterClear}
-              onChange={(e) => setAutoReloadAfterClear(e.target.checked)}
+              checked={draftAutoReload}
+              onChange={(e) => setDraftAutoReload(e.target.checked)}
               className="accent-blue-500 cursor-pointer"
             />
             {t('reloadTabAfterClearingPerSite')}
           </label>
-        </section>
 
-        <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            {t('dataTypes')}
-          </h2>
-          <DataTypeGrid
-            types={DATA_TYPES}
-            selected={selectedTypes}
-            onToggle={toggleType}
-            isDisabled={(type) => scopeMode === 'site' && !type.siteScoped}
-            renderBadge={(type) =>
-              scopeMode === 'site' && !type.siteScoped ? (
-                <span className="text-xs">{t('globalOnly')}</span>
-              ) : null
-            }
-          />
-          {scopeMode === 'site' && <p className="text-xs text-neutral-500 mt-2">{t('siteScopeNote')}</p>}
-          {scopeMode === 'global' && (
-            <p className="text-xs text-neutral-500 mt-2">{t('storageKeyShareNote')}</p>
-          )}
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            {t('scope')}
-          </h2>
-          <div className="flex gap-6 mb-4">
-            <label className="flex items-start gap-2 text-sm max-w-xs cursor-pointer">
-              <input
-                type="radio"
-                className="mt-0.5 cursor-pointer"
-                checked={scopeMode === 'global'}
-                onChange={() => setScopeMode('global')}
-              />
-              <span>
-                <span className="block font-medium">{t('scopeGlobal')}</span>
-                <span className="block text-xs text-neutral-500">{t('scopeGlobalDescription')}</span>
-              </span>
-            </label>
-            <label className="flex items-start gap-2 text-sm max-w-xs cursor-pointer">
-              <input
-                type="radio"
-                className="mt-0.5 cursor-pointer"
-                checked={scopeMode === 'site'}
-                onChange={() => setScopeMode('site')}
-              />
-              <span>
-                <span className="block font-medium">{t('scopePerSite')}</span>
-                <span className="block text-xs text-neutral-500">{t('scopePerSiteDescription')}</span>
-              </span>
-            </label>
-          </div>
-
-          {scopeMode === 'global' ? (
-            <div className="max-w-xs">
-              <DangerConfirmButton
-                status={globalStatus}
-                idleLabel={t('clearAllSites')}
-                confirmLabel={t('yesClearEverything')}
-                onConfirm={handleGlobalClear}
-              />
-            </div>
-          ) : isGeckoBased() ? null : (
+          {!isGeckoBased() && (
             <div>
               <p className="text-xs text-neutral-500 mb-2">{t('openTabsOnly')}</p>
 
@@ -310,7 +331,7 @@ export default function App() {
           )}
         </section>
 
-        {selectedTypes.includes('history') && (
+        {selectedTypesGlobal.includes('history') && (
           <section className="mb-8">
             <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
               {t('recentHistory')}
@@ -319,12 +340,19 @@ export default function App() {
           </section>
         )}
 
-        <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end">
+        <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-2">
           <button
-            onClick={resetSettings}
+            onClick={handleResetDraft}
             className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1.5 text-xs"
           >
             {t('resetToDefaults')}
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!isDirty}
+            className="rounded-md bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1.5 text-xs font-medium"
+          >
+            {saveStatus === 'saved' ? t('saved') : t('save')}
           </button>
         </div>
       </div>
