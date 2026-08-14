@@ -75,7 +75,7 @@ export default function App() {
   }
 
   return (
-    <div className="w-86 p-4 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+    <div className="w-86 p-4 bg-stone-50 text-stone-900 dark:bg-stone-800 dark:text-stone-100">
       <div className="flex items-center gap-2 mb-3">
         <img src="/icon/48.png" alt="" className="w-6 h-6" />
         <h1 className="text-lg font-semibold">{t('popupTitle')}</h1>
@@ -88,9 +88,9 @@ export default function App() {
         className="mb-3"
       />
 
-      <hr className="border-neutral-200 dark:border-neutral-800 mb-3" />
+      <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 
-      <label className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 mb-3 cursor-pointer">
+      <label className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 mb-3 cursor-pointer">
         <input
           type="checkbox"
           checked={autoReloadAfterClear}
@@ -108,7 +108,7 @@ export default function App() {
         clearingLabel={isReloading(activeTabId) ? t('reloading') : t('clearing')}
         failedLabel={t('failedOrDenied')}
       />
-      <p className="text-xs text-neutral-500 mt-1">{t('activeTabHint')}</p>
+      <p className="text-xs text-stone-500 mt-1">{t('activeTabHint')}</p>
 
       <div className="mt-3">
         <DangerConfirmButton
@@ -118,11 +118,11 @@ export default function App() {
           onConfirm={handleClear}
         />
       </div>
-      <p className="text-xs text-neutral-500 mt-1">{t('allSitesHint')}</p>
+      <p className="text-xs text-stone-500 mt-1">{t('allSitesHint')}</p>
 
       <button
         onClick={() => browser.runtime.openOptionsPage()}
-        className="w-full mt-2 rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer py-2 text-sm"
+        className="w-full mt-2 rounded-md border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 cursor-pointer py-2 text-sm"
       >
         {t('settings')}
       </button>

@@ -157,7 +157,9 @@ export async function requestOriginPermission(): Promise<boolean> {
 async function clearCookiesForOrigin(origin: string, storeId?: string): Promise<void> {
   const cookies = await browser.cookies.getAll({ url: origin, storeId });
   await Promise.all(
-    cookies.map((cookie) => browser.cookies.remove({ url: origin, name: cookie.name, storeId: cookie.storeId })),
+    cookies.map((cookie) =>
+      browser.cookies.remove({ url: origin, name: cookie.name, storeId: cookie.storeId }),
+    ),
   );
 }
 

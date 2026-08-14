@@ -4,5 +4,6 @@ import { detectBrowserLanguage, translate, type TranslationKey } from '../utils/
 export function useTranslation() {
   const language = useSettingsStore((s) => s.language);
   const resolved = language === 'auto' ? detectBrowserLanguage() : language;
-  return (key: TranslationKey, vars?: Record<string, string | number>) => translate(resolved, key, vars);
+  return (key: TranslationKey, vars?: Record<string, string | number>) =>
+    translate(resolved, key, vars);
 }

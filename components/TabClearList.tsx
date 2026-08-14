@@ -20,9 +20,9 @@ export function TabClearList({
   const t = useTranslation();
 
   return (
-    <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800 max-h-80 overflow-y-auto">
+    <ul className="divide-y divide-stone-200 rounded-md border border-stone-200 dark:divide-stone-700 dark:border-stone-700 max-h-80 overflow-y-auto">
       {tabs.length === 0 && (
-        <li className="px-3 py-4 text-sm text-neutral-500 text-center">{t('noMatchingTabs')}</li>
+        <li className="px-3 py-4 text-sm text-stone-500 text-center">{t('noMatchingTabs')}</li>
       )}
       {tabs.map((tab) => {
         const busy = tab.id != null && busyTabIds.has(tab.id);
@@ -31,14 +31,14 @@ export function TabClearList({
           <li key={tab.id} className="flex items-center justify-between px-3 py-2 gap-3">
             <span className="min-w-0">
               {tabDomain(tab) && (
-                <span className="block text-xs text-neutral-500 truncate">[{tabDomain(tab)}]</span>
+                <span className="block text-xs text-stone-500 truncate">[{tabDomain(tab)}]</span>
               )}
               <span className="block text-sm truncate">{tab.title ?? tab.url}</span>
             </span>
             <button
               onClick={() => onClear(tab)}
               disabled={busy || reloading}
-              className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1 text-xs whitespace-nowrap"
+              className="rounded-md border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1 text-xs whitespace-nowrap"
             >
               {busy
                 ? t('clearing')

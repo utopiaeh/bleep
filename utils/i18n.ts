@@ -46,9 +46,9 @@ const en = {
 
   // Settings page
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Settings',
+  tabSettings: 'Settings',
+  tabHelp: 'Help',
   resetToDefaults: 'Reset to defaults',
-  save: 'Save',
-  saved: 'Saved ✓',
   theme: 'Theme',
   themeSystem: 'System',
   themeLight: 'Light',
@@ -76,6 +76,21 @@ const en = {
   noMatchingTabs: 'No matching tabs.',
   recentHistory: 'Recent history',
   remove: 'Remove',
+
+  // Help tab
+  helpTitle: 'How Bleep works',
+  helpPopupTitle: 'Popup',
+  helpPopupText:
+    'Click the toolbar icon. "Clear active tab" clears just the site you\'re on. "Clear all sites" clears everything, everywhere.',
+  helpScopeTitle: 'Global vs Per Site',
+  helpScopeText:
+    "Global affects every site you've visited. Per Site affects only one tab you pick. Each has its own checklist below.",
+  helpTypesTitle: 'Data types',
+  helpTypesText:
+    "Cache, Storage, and Service Workers are a site's own saved files. Cookies keep you logged in. History, Downloads, and Form Data are browser records — Global only.",
+  helpReloadTitle: 'Hard reload',
+  helpReloadText:
+    'After clearing, reloads the tab ignoring old cached files, so you see the fresh version right away.',
 };
 
 const ru: typeof en = {
@@ -108,9 +123,9 @@ const ru: typeof en = {
   settings: 'Настройки',
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Настройки',
+  tabSettings: 'Настройки',
+  tabHelp: 'Справка',
   resetToDefaults: 'Сбросить настройки',
-  save: 'Сохранить',
-  saved: 'Сохранено ✓',
   theme: 'Тема',
   themeSystem: 'Системная',
   themeLight: 'Светлая',
@@ -138,6 +153,20 @@ const ru: typeof en = {
   noMatchingTabs: 'Нет подходящих вкладок.',
   recentHistory: 'Недавняя история',
   remove: 'Удалить',
+
+  helpTitle: 'Как работает Bleep',
+  helpPopupTitle: 'Всплывающее окно',
+  helpPopupText:
+    'Нажмите на значок в панели инструментов. «Очистить текущую вкладку» очищает только открытый сайт. «Очистить все сайты» — очищает всё и везде.',
+  helpScopeTitle: 'Глобально и для сайта',
+  helpScopeText:
+    'Глобально — затрагивает все посещённые сайты. Для сайта — только одну выбранную вкладку. У каждого свой список ниже.',
+  helpTypesTitle: 'Типы данных',
+  helpTypesText:
+    'Кэш, хранилище и сервис-воркеры — это собственные файлы сайта. Cookie хранят вход в аккаунт. История, загрузки и данные форм — записи браузера, только глобально.',
+  helpReloadTitle: 'Жёсткая перезагрузка',
+  helpReloadText:
+    'После очистки вкладка перезагружается без старых файлов кэша — сразу видна свежая версия сайта.',
 };
 
 const ro: typeof en = {
@@ -170,9 +199,9 @@ const ro: typeof en = {
   settings: 'Setări',
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Setări',
+  tabSettings: 'Setări',
+  tabHelp: 'Ajutor',
   resetToDefaults: 'Resetează la valorile implicite',
-  save: 'Salvează',
-  saved: 'Salvat ✓',
   theme: 'Temă',
   themeSystem: 'Sistem',
   themeLight: 'Luminoasă',
@@ -200,6 +229,20 @@ const ro: typeof en = {
   noMatchingTabs: 'Nicio filă corespunzătoare.',
   recentHistory: 'Istoric recent',
   remove: 'Elimină',
+
+  helpTitle: 'Cum funcționează Bleep',
+  helpPopupTitle: 'Fereastra popup',
+  helpPopupText:
+    'Apasă pe iconița din bara de instrumente. „Șterge doar fila activă” curăță doar site-ul deschis. „Șterge toate site-urile” curăță tot, peste tot.',
+  helpScopeTitle: 'Global și Per site',
+  helpScopeText:
+    'Global afectează toate site-urile vizitate. Per site afectează doar fila aleasă. Fiecare are propria listă mai jos.',
+  helpTypesTitle: 'Tipuri de date',
+  helpTypesText:
+    'Cache, stocare și service worker-i sunt fișierele proprii ale site-ului. Cookie-urile te țin autentificat. Istoricul, descărcările și datele formularelor sunt înregistrări ale browserului — doar Global.',
+  helpReloadTitle: 'Reîncărcare forțată',
+  helpReloadText:
+    'După ștergere, fila se reîncarcă ignorând fișierele vechi din cache, ca să vezi imediat versiunea nouă.',
 };
 
 const uk: typeof en = {
@@ -232,9 +275,9 @@ const uk: typeof en = {
   settings: 'Налаштування',
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Налаштування',
+  tabSettings: 'Налаштування',
+  tabHelp: 'Довідка',
   resetToDefaults: 'Скинути налаштування',
-  save: 'Зберегти',
-  saved: 'Збережено ✓',
   theme: 'Тема',
   themeSystem: 'Системна',
   themeLight: 'Світла',
@@ -262,6 +305,20 @@ const uk: typeof en = {
   noMatchingTabs: 'Немає відповідних вкладок.',
   recentHistory: 'Недавня історія',
   remove: 'Видалити',
+
+  helpTitle: 'Як працює Bleep',
+  helpPopupTitle: 'Спливаюче вікно',
+  helpPopupText:
+    'Натисніть на значок на панелі інструментів. «Очистити лише поточну вкладку» очищає лише відкритий сайт. «Очистити всі сайти» очищає все й усюди.',
+  helpScopeTitle: 'Глобально і для сайту',
+  helpScopeText:
+    'Глобально стосується всіх відвіданих сайтів. Для сайту — лише однієї обраної вкладки. У кожного свій список нижче.',
+  helpTypesTitle: 'Типи даних',
+  helpTypesText:
+    'Кеш, сховище та сервіс-воркери — власні файли сайту. Cookie зберігають вхід в акаунт. Історія, завантаження та дані форм — записи браузера, лише глобально.',
+  helpReloadTitle: 'Жорстке оновлення',
+  helpReloadText:
+    'Після очищення вкладка оновлюється без старих файлів кешу — одразу видно свіжу версію сайту.',
 };
 
 export type TranslationKey = keyof typeof en;

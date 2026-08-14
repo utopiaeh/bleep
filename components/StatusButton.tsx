@@ -17,7 +17,8 @@ interface StatusButtonProps {
 
 const VARIANT_CLASSES: Record<NonNullable<StatusButtonProps['variant']>, string> = {
   primary: 'bg-blue-600 hover:bg-blue-500 text-white font-medium',
-  secondary: 'border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800',
+  secondary:
+    'border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700',
 };
 
 export function StatusButton({
@@ -36,7 +37,13 @@ export function StatusButton({
   doneLabel ??= t('cleared');
   failedLabel ??= t('failed');
   const label =
-    status === 'clearing' ? clearingLabel : status === 'done' ? doneLabel : status === 'failed' ? failedLabel : idleLabel;
+    status === 'clearing'
+      ? clearingLabel
+      : status === 'done'
+        ? doneLabel
+        : status === 'failed'
+          ? failedLabel
+          : idleLabel;
 
   return (
     <button

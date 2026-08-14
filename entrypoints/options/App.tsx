@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { browser, type Browser } from 'wxt/browser';
 import { DangerConfirmButton } from '../../components/DangerConfirmButton';
 import { DataTypeGrid } from '../../components/DataTypeGrid';
+import { HelpPanel } from '../../components/HelpPanel';
 import { HistoryList } from '../../components/HistoryList';
 import { type ClearStatus } from '../../components/StatusButton';
 import { TabClearList } from '../../components/TabClearList';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
-import { DEFAULTS, useSettingsStore, type Theme } from '../../store/settings';
+import { useSettingsStore } from '../../store/settings';
 import { isGeckoBased } from '../../utils/browser-info';
 import type { Language } from '../../utils/i18n';
 import {
@@ -19,54 +20,31 @@ import {
   siteScopedIds,
   tabDomain,
 } from '../../utils/clearing';
-import { DATA_TYPES, type DataTypeId } from '../../utils/data-types';
+import { DATA_TYPES } from '../../utils/data-types';
 
 type Tab = Browser.tabs.Tab;
 
-const SITE_TYPES = DATA_TYPES.filter((type) => type.siteScoped && !(type.id === 'cache' && isGeckoBased()));
-
-function sameIds(a: DataTypeId[], b: DataTypeId[]): boolean {
-  return [...a].sort().join(',') === [...b].sort().join(',');
-}
+const SITE_TYPES = DATA_TYPES.filter(
+  (type) => type.siteScoped && !(type.id === 'cache' && isGeckoBased()),
+);
 
 export default function App() {
   useTheme();
   const t = useTranslation();
+  const [activeTab, setActiveTab] = useState<'settings' | 'help'>('settings');
   const {
     selectedTypesGlobal,
     selectedTypesSite,
+    toggleTypeGlobal,
+    toggleTypeSite,
     autoReloadAfterClear,
-    theme,
-    language,
-    setSelectedTypesGlobal,
-    setSelectedTypesSite,
     setAutoReloadAfterClear,
+    theme,
     setTheme,
+    language,
     setLanguage,
+    resetSettings,
   } = useSettingsStore();
-
-  const [draftTheme, setDraftTheme] = useState<Theme>(() => useSettingsStore.getState().theme);
-  const [draftLanguage, setDraftLanguage] = useState<Language>(() => useSettingsStore.getState().language);
-  const [draftAutoReload, setDraftAutoReload] = useState(
-    () => useSettingsStore.getState().autoReloadAfterClear,
-  );
-  const [draftGlobal, setDraftGlobal] = useState<DataTypeId[]>(
-    () => useSettingsStore.getState().selectedTypesGlobal,
-  );
-  const [draftSite, setDraftSite] = useState<DataTypeId[]>(() => useSettingsStore.getState().selectedTypesSite);
-  // The popup writes selectedTypesSite directly (no save gate there). Until this
-  // page's Site selection is touched, show the live value instead of a stale
-  // snapshot — once touched, the draft takes over until saved or reset.
-  const [siteTouched, setSiteTouched] = useState(false);
-  const effectiveSite = siteTouched ? draftSite : selectedTypesSite;
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
-
-  const isDirty =
-    draftTheme !== theme ||
-    draftLanguage !== language ||
-    draftAutoReload !== autoReloadAfterClear ||
-    !sameIds(draftGlobal, selectedTypesGlobal) ||
-    !sameIds(effectiveSite, selectedTypesSite);
 
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [siteFilter, setSiteFilter] = useState('');
@@ -94,38 +72,6 @@ export default function App() {
     if (!q) return tabs;
     return tabs.filter((tab) => (tabDomain(tab) ?? '').toLowerCase().includes(q));
   }, [tabs, siteFilter]);
-
-  function toggleDraftGlobal(id: DataTypeId) {
-    setDraftGlobal((current) => (current.includes(id) ? current.filter((t) => t !== id) : [...current, id]));
-  }
-
-  function toggleDraftSite(id: DataTypeId) {
-    setDraftSite((current) => {
-      const base = siteTouched ? current : effectiveSite;
-      return base.includes(id) ? base.filter((t) => t !== id) : [...base, id];
-    });
-    setSiteTouched(true);
-  }
-
-  function handleSave() {
-    setTheme(draftTheme);
-    setLanguage(draftLanguage);
-    setAutoReloadAfterClear(draftAutoReload);
-    setSelectedTypesGlobal(draftGlobal);
-    setSelectedTypesSite(effectiveSite);
-    setSiteTouched(false);
-    setSaveStatus('saved');
-    setTimeout(() => setSaveStatus('idle'), 1500);
-  }
-
-  function handleResetDraft() {
-    setDraftTheme(DEFAULTS.theme);
-    setDraftLanguage(DEFAULTS.language);
-    setDraftAutoReload(DEFAULTS.autoReloadAfterClear);
-    setDraftGlobal(DEFAULTS.selectedTypesGlobal);
-    setDraftSite(DEFAULTS.selectedTypesSite);
-    setSiteTouched(true);
-  }
 
   async function handleGlobalClear() {
     setGlobalStatus('clearing');
@@ -208,153 +154,178 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-neutral-950">
-      <div className="text-neutral-900 dark:text-neutral-100 p-8 max-w-4xl mx-auto">
+    <div className="min-h-screen w-full bg-stone-50 dark:bg-stone-900">
+      <div className="text-stone-900 dark:text-stone-100 p-8 max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <img src="/icon/48.png" alt="" className="w-8 h-8 shrink-0" />
           <h1 className="text-2xl font-semibold whitespace-nowrap">{t('settingsTitle')}</h1>
         </div>
 
-        <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            {t('theme')}
-          </h2>
-          <div className="flex gap-4">
-            {(
-              [
-                ['system', t('themeSystem')],
-                ['light', t('themeLight')],
-                ['dark', t('themeDark')],
-              ] as const
-            ).map(([value, label]) => (
-              <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="radio"
-                  checked={draftTheme === value}
-                  onChange={() => setDraftTheme(value)}
-                  className="cursor-pointer"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            {t('language')}
-          </h2>
-          <select
-            value={draftLanguage}
-            onChange={(e) => setDraftLanguage(e.target.value as Language)}
-            className="rounded-md border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900 px-3 py-1.5 text-sm cursor-pointer focus:outline-none focus:border-blue-500"
-          >
-            <option value="auto">{t('languageAuto')}</option>
-            <option value="en">{t('languageEnglish')}</option>
-            <option value="ru">{t('languageRussian')}</option>
-            <option value="ro">{t('languageRomanian')}</option>
-            <option value="uk">{t('languageUkrainian')}</option>
-          </select>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            {t('scopeGlobal')}
-          </h2>
-          <p className="text-xs text-neutral-500 mb-2">{t('scopeGlobalDescription')}</p>
-          <DataTypeGrid types={DATA_TYPES} selected={draftGlobal} onToggle={toggleDraftGlobal} className="mb-2" />
-          <p className="text-xs text-neutral-500 mb-3">{t('storageKeyShareNote')}</p>
-          <div className="max-w-xs">
-            <DangerConfirmButton
-              status={globalStatus}
-              idleLabel={t('clearAllSites')}
-              confirmLabel={t('yesClearEverything')}
-              onConfirm={handleGlobalClear}
-            />
-          </div>
-        </section>
-
-        <hr className="border-neutral-200 dark:border-neutral-800 mb-8" />
-
-        <section className="mb-8">
-          <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-            {t('scopePerSite')}
-          </h2>
-          <p className="text-xs text-neutral-500 mb-2">{t('scopePerSiteDescription')}</p>
-          <DataTypeGrid types={SITE_TYPES} selected={effectiveSite} onToggle={toggleDraftSite} className="mb-3" />
-
-          <label className="flex items-center gap-2 text-sm cursor-pointer mb-3">
-            <input
-              type="checkbox"
-              checked={draftAutoReload}
-              onChange={(e) => setDraftAutoReload(e.target.checked)}
-              className="accent-blue-500 cursor-pointer"
-            />
-            {t('reloadTabAfterClearingPerSite')}
-          </label>
-
-          {!isGeckoBased() && (
-            <div>
-              <p className="text-xs text-neutral-500 mb-2">{t('openTabsOnly')}</p>
-
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={siteFilter}
-                  onChange={(e) => setSiteFilter(e.target.value)}
-                  placeholder={t('filterTabsPlaceholder')}
-                  className="flex-1 rounded-md border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900 px-3 py-1.5 text-sm placeholder:text-neutral-500 focus:outline-none focus:border-blue-500"
-                />
-                <button
-                  onClick={handleClearAllTabs}
-                  disabled={bulkStatus === 'clearing' || filteredTabs.length === 0}
-                  className="rounded-md bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1.5 text-xs font-medium whitespace-nowrap"
-                >
-                  {bulkStatus === 'clearing'
-                    ? t('clearing')
-                    : bulkStatus === 'done'
-                      ? t('cleared')
-                      : bulkStatus === 'failed'
-                        ? t('someFailed')
-                        : t('clearAllCount', { count: filteredTabs.length })}
-                </button>
-              </div>
-
-              <TabClearList
-                tabs={filteredTabs}
-                busyTabIds={busyTabIds}
-                failedTabIds={failedTabIds}
-                reloadingTabIds={reloadingTabIds}
-                onClear={handleSiteClear}
-              />
-            </div>
-          )}
-        </section>
-
-        {selectedTypesGlobal.includes('history') && (
-          <section className="mb-8">
-            <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
-              {t('recentHistory')}
-            </h2>
-            <HistoryList items={history} onDelete={handleDeleteHistoryItem} />
-          </section>
-        )}
-
-        <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-2">
-          <button
-            onClick={handleResetDraft}
-            className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1.5 text-xs"
-          >
-            {t('resetToDefaults')}
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!isDirty}
-            className="rounded-md bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1.5 text-xs font-medium"
-          >
-            {saveStatus === 'saved' ? t('saved') : t('save')}
-          </button>
+        <div className="flex gap-4 mb-6 border-b border-stone-200 dark:border-stone-700">
+          {(['settings', 'help'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`pb-2 text-sm cursor-pointer border-b-2 -mb-px ${
+                activeTab === tab
+                  ? 'border-blue-600 font-medium'
+                  : 'border-transparent text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
+              }`}
+            >
+              {tab === 'settings' ? t('tabSettings') : t('tabHelp')}
+            </button>
+          ))}
         </div>
+
+        {activeTab === 'help' && <HelpPanel />}
+
+        {activeTab === 'settings' && (
+          <>
+            <section className="mb-8">
+              <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
+                {t('theme')}
+              </h2>
+              <div className="flex gap-4">
+                {(
+                  [
+                    ['system', t('themeSystem')],
+                    ['light', t('themeLight')],
+                    ['dark', t('themeDark')],
+                  ] as const
+                ).map(([value, label]) => (
+                  <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={theme === value}
+                      onChange={() => setTheme(value)}
+                      className="cursor-pointer"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
+                {t('language')}
+              </h2>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as Language)}
+                className="rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm cursor-pointer focus:outline-none focus:border-blue-500"
+              >
+                <option value="auto">{t('languageAuto')}</option>
+                <option value="en">{t('languageEnglish')}</option>
+                <option value="ru">{t('languageRussian')}</option>
+                <option value="ro">{t('languageRomanian')}</option>
+                <option value="uk">{t('languageUkrainian')}</option>
+              </select>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
+                {t('scopeGlobal')}
+              </h2>
+              <p className="text-xs text-stone-500 mb-2">{t('scopeGlobalDescription')}</p>
+              <DataTypeGrid
+                types={DATA_TYPES}
+                selected={selectedTypesGlobal}
+                onToggle={toggleTypeGlobal}
+                className="mb-2"
+              />
+              <p className="text-xs text-stone-500 mb-3">{t('storageKeyShareNote')}</p>
+              <div className="max-w-xs">
+                <DangerConfirmButton
+                  status={globalStatus}
+                  idleLabel={t('clearAllSites')}
+                  confirmLabel={t('yesClearEverything')}
+                  onConfirm={handleGlobalClear}
+                />
+              </div>
+            </section>
+
+            <hr className="border-stone-200 dark:border-stone-700 mb-8" />
+
+            <section className="mb-8">
+              <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
+                {t('scopePerSite')}
+              </h2>
+              <p className="text-xs text-stone-500 mb-2">{t('scopePerSiteDescription')}</p>
+              <DataTypeGrid
+                types={SITE_TYPES}
+                selected={selectedTypesSite}
+                onToggle={toggleTypeSite}
+                className="mb-3"
+              />
+
+              <label className="flex items-center gap-2 text-sm cursor-pointer mb-3">
+                <input
+                  type="checkbox"
+                  checked={autoReloadAfterClear}
+                  onChange={(e) => setAutoReloadAfterClear(e.target.checked)}
+                  className="accent-blue-500 cursor-pointer"
+                />
+                {t('reloadTabAfterClearingPerSite')}
+              </label>
+
+              {!isGeckoBased() && (
+                <div>
+                  <p className="text-xs text-stone-500 mb-2">{t('openTabsOnly')}</p>
+
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={siteFilter}
+                      onChange={(e) => setSiteFilter(e.target.value)}
+                      placeholder={t('filterTabsPlaceholder')}
+                      className="flex-1 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      onClick={handleClearAllTabs}
+                      disabled={bulkStatus === 'clearing' || filteredTabs.length === 0}
+                      className="rounded-md bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1.5 text-xs font-medium whitespace-nowrap"
+                    >
+                      {bulkStatus === 'clearing'
+                        ? t('clearing')
+                        : bulkStatus === 'done'
+                          ? t('cleared')
+                          : bulkStatus === 'failed'
+                            ? t('someFailed')
+                            : t('clearAllCount', { count: filteredTabs.length })}
+                    </button>
+                  </div>
+
+                  <TabClearList
+                    tabs={filteredTabs}
+                    busyTabIds={busyTabIds}
+                    failedTabIds={failedTabIds}
+                    reloadingTabIds={reloadingTabIds}
+                    onClear={handleSiteClear}
+                  />
+                </div>
+              )}
+            </section>
+
+            {selectedTypesGlobal.includes('history') && (
+              <section className="mb-8">
+                <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
+                  {t('recentHistory')}
+                </h2>
+                <HistoryList items={history} onDelete={handleDeleteHistoryItem} />
+              </section>
+            )}
+
+            <div className="pt-4 border-t border-stone-200 dark:border-stone-700 flex justify-end">
+              <button
+                onClick={resetSettings}
+                className="rounded-md border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 cursor-pointer px-3 py-1.5 text-xs"
+              >
+                {t('resetToDefaults')}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

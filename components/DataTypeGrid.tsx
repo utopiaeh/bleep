@@ -10,7 +10,13 @@ interface DataTypeGridProps {
   className?: string;
 }
 
-export function DataTypeGrid({ types, selected, onToggle, columns = 2, className = '' }: DataTypeGridProps) {
+export function DataTypeGrid({
+  types,
+  selected,
+  onToggle,
+  columns = 2,
+  className = '',
+}: DataTypeGridProps) {
   const t = useTranslation();
 
   return (

@@ -6,7 +6,13 @@ import { browserLocalStorage } from '../utils/storage-adapter';
 
 export type Theme = 'system' | 'light' | 'dark';
 
-const DEFAULT_TYPES: DataTypeId[] = ['cacheStorage', 'cache', 'indexedDB', 'localStorage', 'sessionStorage'];
+const DEFAULT_TYPES: DataTypeId[] = [
+  'cacheStorage',
+  'cache',
+  'indexedDB',
+  'localStorage',
+  'sessionStorage',
+];
 
 export const DEFAULTS = {
   selectedTypesGlobal: DEFAULT_TYPES,
@@ -22,29 +28,38 @@ interface SettingsState {
   autoReloadAfterClear: boolean;
   theme: Theme;
   language: Language;
+  toggleTypeGlobal: (id: DataTypeId) => void;
   toggleTypeSite: (id: DataTypeId) => void;
-  setSelectedTypesGlobal: (ids: DataTypeId[]) => void;
-  setSelectedTypesSite: (ids: DataTypeId[]) => void;
   setAutoReloadAfterClear: (value: boolean) => void;
   setTheme: (theme: Theme) => void;
   setLanguage: (language: Language) => void;
+  resetSettings: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       ...DEFAULTS,
+      toggleTypeGlobal: (id) => {
+        const current = get().selectedTypesGlobal;
+        set({
+          selectedTypesGlobal: current.includes(id)
+            ? current.filter((t) => t !== id)
+            : [...current, id],
+        });
+      },
       toggleTypeSite: (id) => {
         const current = get().selectedTypesSite;
         set({
-          selectedTypesSite: current.includes(id) ? current.filter((t) => t !== id) : [...current, id],
+          selectedTypesSite: current.includes(id)
+            ? current.filter((t) => t !== id)
+            : [...current, id],
         });
       },
-      setSelectedTypesGlobal: (ids) => set({ selectedTypesGlobal: ids }),
-      setSelectedTypesSite: (ids) => set({ selectedTypesSite: ids }),
       setAutoReloadAfterClear: (value) => set({ autoReloadAfterClear: value }),
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
+      resetSettings: () => set(DEFAULTS),
     }),
     {
       name: 'cache-cleaner-settings',
