@@ -87,7 +87,8 @@ export default function App() {
       return next;
     });
     try {
-      const ok = await clearTab(tab, siteScopedIds(selectedTypes));
+      const ids = siteScopedIds(selectedTypes);
+      const ok = await clearTab(tab, ids);
       if (!ok) setFailedTabIds((s) => new Set(s).add(tab.id!));
       else if (autoReloadAfterClear) {
         markReloading(tab.id);
@@ -147,18 +148,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full bg-white dark:bg-neutral-950">
-      <div className="text-neutral-900 dark:text-neutral-100 p-8 max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <img src="/icon/48.png" alt="" className="w-8 h-8" />
-            <h1 className="text-2xl font-semibold">{t('settingsTitle')}</h1>
-          </div>
-          <button
-            onClick={resetSettings}
-            className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1.5 text-xs"
-          >
-            {t('resetToDefaults')}
-          </button>
+      <div className="text-neutral-900 dark:text-neutral-100 p-8 max-w-4xl mx-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <img src="/icon/48.png" alt="" className="w-8 h-8 shrink-0" />
+          <h1 className="text-2xl font-semibold whitespace-nowrap">{t('settingsTitle')}</h1>
         </div>
 
         <section className="mb-8">
@@ -279,12 +272,9 @@ export default function App() {
                 onConfirm={handleGlobalClear}
               />
             </div>
-          ) : (
+          ) : isGeckoBased() ? null : (
             <div>
-              <p className="text-xs text-neutral-500 mb-2">
-                {t('openTabsOnly')}
-                {isGeckoBased() && t('geckoClearNote')}
-              </p>
+              <p className="text-xs text-neutral-500 mb-2">{t('openTabsOnly')}</p>
 
               <div className="flex gap-2 mb-2">
                 <input
@@ -321,13 +311,22 @@ export default function App() {
         </section>
 
         {selectedTypes.includes('history') && (
-          <section>
+          <section className="mb-8">
             <h2 className="text-sm uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
               {t('recentHistory')}
             </h2>
             <HistoryList items={history} onDelete={handleDeleteHistoryItem} />
           </section>
         )}
+
+        <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end">
+          <button
+            onClick={resetSettings}
+            className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1.5 text-xs"
+          >
+            {t('resetToDefaults')}
+          </button>
+        </div>
       </div>
     </div>
   );

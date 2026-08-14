@@ -8,7 +8,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: ({ browser }) => ({
-    name: 'Bleep',
+    name: 'Bleep - Fast Global & Tab Cache Cleaner',
     description:
       'Full control over your browsing data — clear cache, cookies, storage, service workers, and history globally or per site.',
     author: 'utopiaeh01@gmail.com' as unknown as { email: string },
@@ -19,7 +19,7 @@ export default defineConfig({
       'tabs',
       'browsingData',
       'history',
-      ...(browser === 'firefox' ? (['scripting'] as const) : []),
+      ...(browser === 'firefox' ? (['scripting', 'cookies'] as const) : []),
     ],
     optional_host_permissions: ['*://*/*'],
     browser_specific_settings: {

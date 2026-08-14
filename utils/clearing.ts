@@ -94,13 +94,6 @@ async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string,
     sessionStorage() {
       sessionStorage.clear();
     },
-    cookies() {
-      for (const cookie of document.cookie.split(';')) {
-        const name = cookie.split('=')[0]?.trim();
-        if (!name) continue;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-      }
-    },
     async serviceWorkers() {
       if (!('serviceWorker' in navigator)) return;
       const registrations = await navigator.serviceWorker.getRegistrations();
@@ -121,26 +114,51 @@ async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string,
   return { failed };
 }
 
-export async function clearSiteViaContentScript(tabId: number, ids: DataTypeId[]): Promise<void> {
-  await withTimeout(
-    (async () => {
-      const [injection] = await browser.scripting.executeScript({
-        target: { tabId },
-        world: 'MAIN',
-        func: clearInMainWorld,
-        args: [siteScopedIds(ids)],
-      });
-      const failed = injection?.result?.failed;
-      if (failed && Object.keys(failed).length > 0) {
-        console.error('Bleep: some data types failed to clear', failed);
-      }
-    })(),
-    15000,
-  );
+export async function clearSiteViaContentScript(
+  tabId: number,
+  origin: string,
+  ids: DataTypeId[],
+  cookieStoreId?: string,
+): Promise<void> {
+  const scoped = siteScopedIds(ids);
+  const scriptIds = scoped.filter((id) => id !== 'cookies');
+
+  const tasks: Promise<unknown>[] = [];
+  if (scriptIds.length > 0) {
+    tasks.push(
+      withTimeout(
+        (async () => {
+          const [injection] = await browser.scripting.executeScript({
+            target: { tabId },
+            world: 'MAIN',
+            func: clearInMainWorld,
+            args: [scriptIds],
+          });
+          const failed = injection?.result?.failed;
+          if (failed && Object.keys(failed).length > 0) {
+            console.error('Bleep: some data types failed to clear', failed);
+          }
+        })(),
+        15000,
+      ),
+    );
+  }
+  if (scoped.includes('cookies')) {
+    tasks.push(withTimeout(clearCookiesForOrigin(origin, cookieStoreId), 15000));
+  }
+  await Promise.all(tasks);
 }
 
 export async function requestOriginPermission(): Promise<boolean> {
   return browser.permissions.request({ origins: ['*://*/*'] });
+}
+
+/** document.cookie can't see HttpOnly cookies; the privileged cookies API can. */
+async function clearCookiesForOrigin(origin: string, storeId?: string): Promise<void> {
+  const cookies = await browser.cookies.getAll({ url: origin, storeId });
+  await Promise.all(
+    cookies.map((cookie) => browser.cookies.remove({ url: origin, name: cookie.name, storeId: cookie.storeId })),
+  );
 }
 
 export function tabOrigin(tab: { url?: string }): string | null {
@@ -162,14 +180,14 @@ export function tabDomain(tab: { url?: string }): string | null {
 }
 
 export async function clearTabData(
-  tab: { id?: number; url?: string },
+  tab: { id?: number; url?: string; cookieStoreId?: string },
   ids: DataTypeId[],
 ): Promise<boolean> {
   const origin = tabOrigin(tab);
   if (!origin || tab.id == null) return false;
 
   if (import.meta.env.FIREFOX) {
-    await clearSiteViaContentScript(tab.id, ids);
+    await clearSiteViaContentScript(tab.id, origin, ids, tab.cookieStoreId);
   } else {
     await clearSiteViaBrowsingData(origin, ids);
   }

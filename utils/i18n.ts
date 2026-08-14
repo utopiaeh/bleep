@@ -35,7 +35,7 @@ const en = {
   globalOnly: '(global only)',
 
   // Popup
-  popupTitle: 'Bleep',
+  popupTitle: 'Bleep - Cache Cleaner',
   reloadTabAfterClearing: 'Reload tab after clearing',
   clearActiveTabOnly: 'Clear active tab only',
   failedOrDenied: 'Failed / denied',
@@ -73,8 +73,6 @@ const en = {
   scopePerSiteDescription:
     "Pick one open tab below; only that site's data is cleared, everything else is untouched. Asks for one-time site permission the first time you clear.",
   openTabsOnly: 'Only open tabs can be targeted.',
-  geckoClearNote:
-    ' This browser clears via the page itself, so unreachable (backgrounded/discarded) tabs may not fully clear.',
   filterTabsPlaceholder: 'Filter open tabs by domain…',
   someFailed: 'Some failed',
   clearAllCount: 'Clear all ({count})',
@@ -103,7 +101,7 @@ const ru: typeof en = {
   cancel: 'Отмена',
   globalOnly: '(только глобально)',
 
-  popupTitle: 'Bleep',
+  popupTitle: 'Bleep - Cache Cleaner',
   reloadTabAfterClearing: 'Обновить вкладку после очистки',
   clearActiveTabOnly: 'Очистить текущую вкладку',
   failedOrDenied: 'Ошибка / отказано',
@@ -141,8 +139,6 @@ const ru: typeof en = {
   scopePerSiteDescription:
     'Выберите одну открытую вкладку ниже; будут очищены данные только этого сайта, остальное не тронуто. При первой очистке запросит разрешение.',
   openTabsOnly: 'Доступны только открытые вкладки.',
-  geckoClearNote:
-    ' Этот браузер очищает данные через саму страницу, поэтому недоступные (фоновые/выгруженные) вкладки могут очиститься не полностью.',
   filterTabsPlaceholder: 'Фильтр открытых вкладок по домену…',
   someFailed: 'Часть не удалась',
   clearAllCount: 'Очистить все ({count})',
@@ -171,7 +167,7 @@ const ro: typeof en = {
   cancel: 'Anulează',
   globalOnly: '(doar global)',
 
-  popupTitle: 'Bleep',
+  popupTitle: 'Bleep - Cache Cleaner',
   reloadTabAfterClearing: 'Reîncarcă fila după ștergere',
   clearActiveTabOnly: 'Șterge doar fila activă',
   failedOrDenied: 'Eroare / refuzat',
@@ -209,8 +205,6 @@ const ro: typeof en = {
   scopePerSiteDescription:
     'Alege o filă deschisă mai jos; se șterg doar datele acelui site, restul rămân neafectate. Va cere permisiune la prima ștergere.',
   openTabsOnly: 'Pot fi ținta doar filele deschise.',
-  geckoClearNote:
-    ' Acest browser șterge prin pagina însăși, așa că filele inaccesibile (fundal/descărcate) ar putea să nu se șteargă complet.',
   filterTabsPlaceholder: 'Filtrează filele deschise după domeniu…',
   someFailed: 'Unele au eșuat',
   clearAllCount: 'Șterge toate ({count})',
@@ -239,7 +233,7 @@ const uk: typeof en = {
   cancel: 'Скасувати',
   globalOnly: '(лише глобально)',
 
-  popupTitle: 'Bleep',
+  popupTitle: 'Bleep - Cache Cleaner',
   reloadTabAfterClearing: 'Оновити вкладку після очищення',
   clearActiveTabOnly: 'Очистити лише поточну вкладку',
   failedOrDenied: 'Помилка / відмовлено',
@@ -277,8 +271,6 @@ const uk: typeof en = {
   scopePerSiteDescription:
     'Виберіть одну відкриту вкладку нижче; будуть очищені дані лише цього сайту, решта не торкнеться. При першому очищенні запитає дозвіл.',
   openTabsOnly: 'Можна вибрати лише відкриті вкладки.',
-  geckoClearNote:
-    ' Цей браузер очищає дані через саму сторінку, тому недоступні (фонові/вивантажені) вкладки можуть очиститися не повністю.',
   filterTabsPlaceholder: 'Фільтр відкритих вкладок за доменом…',
   someFailed: 'Частина не вдалася',
   clearAllCount: 'Очистити всі ({count})',

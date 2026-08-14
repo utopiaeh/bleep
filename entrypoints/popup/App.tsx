@@ -55,10 +55,8 @@ export default function App() {
       if (isReloading(activeTab?.id)) {
         setTabStatus('failed');
       } else {
-        const ok =
-          granted && activeTab
-            ? await clearTabData(activeTab, siteScopedIds(selectedTypes))
-            : false;
+        const ids = siteScopedIds(selectedTypes);
+        const ok = granted && activeTab ? await clearTabData(activeTab, ids) : false;
         setTabStatus(ok ? 'done' : 'failed');
         if (ok && autoReloadAfterClear && activeTab?.id != null) {
           markReloading(activeTab.id);
