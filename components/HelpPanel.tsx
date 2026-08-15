@@ -6,6 +6,7 @@ const ITEMS: Array<{ title: TranslationKey; text: TranslationKey }> = [
   { title: 'helpScopeTitle', text: 'helpScopeText' },
   { title: 'helpTypesTitle', text: 'helpTypesText' },
   { title: 'helpReloadTitle', text: 'helpReloadText' },
+  { title: 'helpMappingsTitle', text: 'helpMappingsText' },
 ];
 
 export function HelpPanel() {

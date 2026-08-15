@@ -10,7 +10,7 @@ export function HistoryList({ items, onDelete }: HistoryListProps) {
   const t = useTranslation();
 
   return (
-    <ul className="divide-y divide-stone-200 rounded-md border border-stone-200 dark:divide-stone-700 dark:border-stone-700">
+    <ul className="divide-y divide-stone-200 rounded-md border border-stone-200 dark:divide-stone-700 dark:border-stone-700 max-h-80 overflow-y-auto">
       {items.map((item) => (
         <li key={item.id} className="flex items-center justify-between px-3 py-2">
           <span className="text-sm truncate max-w-md">{item.title || item.url}</span>

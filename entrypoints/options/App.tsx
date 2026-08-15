@@ -1,37 +1,39 @@
 import { useEffect, useMemo, useState } from 'react';
 import { browser, type Browser } from 'wxt/browser';
-import { DangerConfirmButton } from '../../components/DangerConfirmButton';
-import { DataTypeGrid } from '../../components/DataTypeGrid';
+import { GlobalSection } from '../../components/options/GlobalSection';
+import { PerSiteSection } from '../../components/options/PerSiteSection';
+import { SettingsHeader, type OptionsTab } from '../../components/options/SettingsHeader';
+import { LanguageSection } from '../../components/options/LanguageSection';
+import { ThemeSection } from '../../components/options/ThemeSection';
 import { HelpPanel } from '../../components/HelpPanel';
-import { HistoryList } from '../../components/HistoryList';
 import { type ClearStatus } from '../../components/StatusButton';
-import { TabClearList } from '../../components/TabClearList';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useSettingsStore } from '../../store/settings';
 import { isGeckoBased } from '../../utils/browser-info';
-import type { Language } from '../../utils/i18n';
 import {
   clearGlobal,
+  clearLinkedOrigin,
   clearTab,
   clearTabData,
+  linkedOriginsFor,
   requestOriginPermission,
   siteScopedIds,
+  tabCookieStoreId,
   tabDomain,
+  tabOrigin,
 } from '../../utils/clearing';
-import { DATA_TYPES } from '../../utils/data-types';
+import { siteScopedDataTypes } from '../../utils/data-types';
 
 type Tab = Browser.tabs.Tab;
 
-const SITE_TYPES = DATA_TYPES.filter(
-  (type) => type.siteScoped && !(type.id === 'cache' && isGeckoBased()),
-);
+const SITE_TYPES = siteScopedDataTypes();
 
 export default function App() {
   useTheme();
   const t = useTranslation();
-  const [activeTab, setActiveTab] = useState<'settings' | 'help'>('settings');
+  const [activeTab, setActiveTab] = useState<OptionsTab>('general');
   const {
     selectedTypesGlobal,
     selectedTypesSite,
@@ -39,6 +41,10 @@ export default function App() {
     toggleTypeSite,
     autoReloadAfterClear,
     setAutoReloadAfterClear,
+    linkedOrigins,
+    setLinkedOrigins,
+    useOriginMappings,
+    setUseOriginMappings,
     theme,
     setTheme,
     language,
@@ -52,6 +58,8 @@ export default function App() {
   const [failedTabIds, setFailedTabIds] = useState<Set<number>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<ClearStatus>('idle');
   const [history, setHistory] = useState<Browser.history.HistoryItem[]>([]);
+  const [historyFilter, setHistoryFilter] = useState('');
+  const [historyBulkStatus, setHistoryBulkStatus] = useState<ClearStatus>('idle');
   const [globalStatus, setGlobalStatus] = useState<ClearStatus>('idle');
   const { reloadingTabIds, markReloading, isReloading } = useReloadGuard();
 
@@ -72,6 +80,12 @@ export default function App() {
     if (!q) return tabs;
     return tabs.filter((tab) => (tabDomain(tab) ?? '').toLowerCase().includes(q));
   }, [tabs, siteFilter]);
+
+  const filteredHistory = useMemo(() => {
+    const q = historyFilter.trim().toLowerCase();
+    if (!q) return history;
+    return history.filter((item) => (item.title ?? item.url ?? '').toLowerCase().includes(q));
+  }, [history, historyFilter]);
 
   async function handleGlobalClear() {
     setGlobalStatus('clearing');
@@ -97,9 +111,19 @@ export default function App() {
       const ids = siteScopedIds(selectedTypesSite);
       const ok = await clearTab(tab, ids);
       if (!ok) setFailedTabIds((s) => new Set(s).add(tab.id!));
-      else if (autoReloadAfterClear) {
-        markReloading(tab.id);
-        browser.tabs.reload(tab.id, { bypassCache: true });
+      else {
+        const origin = tabOrigin(tab);
+        if (useOriginMappings && origin) {
+          await Promise.all(
+            linkedOriginsFor(linkedOrigins, origin).map((target) =>
+              clearLinkedOrigin(target, ids, tabCookieStoreId(tab)),
+            ),
+          );
+        }
+        if (autoReloadAfterClear) {
+          markReloading(tab.id);
+          browser.tabs.reload(tab.id, { bypassCache: true });
+        }
       }
     } catch (err) {
       console.error('Bleep: site clear failed', err);
@@ -129,13 +153,33 @@ export default function App() {
         targets.map((tab) => clearTabData(tab, ids).then((ok) => ({ tab, ok }))),
       );
       const failed = new Set<number>();
+      const clearedTabIds: number[] = [];
+      const linkedTasks: Promise<unknown>[] = [];
+      const seenLinkedClears = new Set<string>();
       for (const result of results) {
         if (result.status === 'rejected') continue;
         const { tab, ok } = result.value;
-        if (!ok) failed.add(tab.id!);
-        else if (autoReloadAfterClear) {
-          markReloading(tab.id!);
-          browser.tabs.reload(tab.id!, { bypassCache: true });
+        if (!ok) {
+          failed.add(tab.id!);
+          continue;
+        }
+        clearedTabIds.push(tab.id!);
+        if (!useOriginMappings) continue;
+        const origin = tabOrigin(tab);
+        if (!origin) continue;
+        const storeId = tabCookieStoreId(tab);
+        for (const target of linkedOriginsFor(linkedOrigins, origin)) {
+          const key = `${storeId ?? ''}||${target}`;
+          if (seenLinkedClears.has(key)) continue;
+          seenLinkedClears.add(key);
+          linkedTasks.push(clearLinkedOrigin(target, ids, storeId));
+        }
+      }
+      await Promise.all(linkedTasks);
+      if (autoReloadAfterClear) {
+        for (const tabId of clearedTabIds) {
+          markReloading(tabId);
+          browser.tabs.reload(tabId, { bypassCache: true });
         }
       }
       setFailedTabIds(failed);
@@ -153,6 +197,23 @@ export default function App() {
     setHistory((h) => h.filter((item) => item.url !== url));
   }
 
+  async function handleClearAllHistory() {
+    if (filteredHistory.length === 0) return;
+    setHistoryBulkStatus('clearing');
+    try {
+      await Promise.all(
+        filteredHistory.map((item) => (item.url ? browser.history.deleteUrl({ url: item.url }) : undefined)),
+      );
+      const removed = new Set(filteredHistory.map((item) => item.url));
+      setHistory((h) => h.filter((item) => !removed.has(item.url)));
+      setHistoryBulkStatus('done');
+    } catch (err) {
+      console.error('Bleep: clear-all-history failed', err);
+      setHistoryBulkStatus('failed');
+    }
+    setTimeout(() => setHistoryBulkStatus('idle'), 1500);
+  }
+
   return (
     <div className="min-h-screen w-full bg-stone-50 dark:bg-stone-900">
       <div className="text-stone-900 dark:text-stone-100 p-8 max-w-4xl mx-auto">
@@ -161,171 +222,55 @@ export default function App() {
           <h1 className="text-2xl font-semibold whitespace-nowrap">{t('settingsTitle')}</h1>
         </div>
 
-        <div className="flex gap-4 mb-6 border-b border-stone-200 dark:border-stone-700">
-          {(['settings', 'help'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`pb-2 text-sm cursor-pointer border-b-2 -mb-px ${
-                activeTab === tab
-                  ? 'border-blue-600 font-medium'
-                  : 'border-transparent text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-              }`}
-            >
-              {tab === 'settings' ? t('tabSettings') : t('tabHelp')}
-            </button>
-          ))}
-        </div>
+        <SettingsHeader activeTab={activeTab} onTabChange={setActiveTab} onReset={resetSettings} />
 
-        {activeTab === 'help' && <HelpPanel />}
-
-        {activeTab === 'settings' && (
+        {activeTab === 'general' && (
           <>
-            <section className="mb-8">
-              <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
-                {t('theme')}
-              </h2>
-              <div className="flex gap-4">
-                {(
-                  [
-                    ['system', t('themeSystem')],
-                    ['light', t('themeLight')],
-                    ['dark', t('themeDark')],
-                  ] as const
-                ).map(([value, label]) => (
-                  <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={theme === value}
-                      onChange={() => setTheme(value)}
-                      className="cursor-pointer"
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
-                {t('language')}
-              </h2>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as Language)}
-                className="rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm cursor-pointer focus:outline-none focus:border-blue-500"
-              >
-                <option value="auto">{t('languageAuto')}</option>
-                <option value="en">{t('languageEnglish')}</option>
-                <option value="ru">{t('languageRussian')}</option>
-                <option value="ro">{t('languageRomanian')}</option>
-                <option value="uk">{t('languageUkrainian')}</option>
-              </select>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
-                {t('scopeGlobal')}
-              </h2>
-              <p className="text-xs text-stone-500 mb-2">{t('scopeGlobalDescription')}</p>
-              <DataTypeGrid
-                types={DATA_TYPES}
-                selected={selectedTypesGlobal}
-                onToggle={toggleTypeGlobal}
-                className="mb-2"
-              />
-              <p className="text-xs text-stone-500 mb-3">{t('storageKeyShareNote')}</p>
-              <div className="max-w-xs">
-                <DangerConfirmButton
-                  status={globalStatus}
-                  idleLabel={t('clearAllSites')}
-                  confirmLabel={t('yesClearEverything')}
-                  onConfirm={handleGlobalClear}
-                />
-              </div>
-            </section>
-
-            <hr className="border-stone-200 dark:border-stone-700 mb-8" />
-
-            <section className="mb-8">
-              <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
-                {t('scopePerSite')}
-              </h2>
-              <p className="text-xs text-stone-500 mb-2">{t('scopePerSiteDescription')}</p>
-              <DataTypeGrid
-                types={SITE_TYPES}
-                selected={selectedTypesSite}
-                onToggle={toggleTypeSite}
-                className="mb-3"
-              />
-
-              <label className="flex items-center gap-2 text-sm cursor-pointer mb-3">
-                <input
-                  type="checkbox"
-                  checked={autoReloadAfterClear}
-                  onChange={(e) => setAutoReloadAfterClear(e.target.checked)}
-                  className="accent-blue-500 cursor-pointer"
-                />
-                {t('reloadTabAfterClearingPerSite')}
-              </label>
-
-              {!isGeckoBased() && (
-                <div>
-                  <p className="text-xs text-stone-500 mb-2">{t('openTabsOnly')}</p>
-
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={siteFilter}
-                      onChange={(e) => setSiteFilter(e.target.value)}
-                      placeholder={t('filterTabsPlaceholder')}
-                      className="flex-1 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
-                    />
-                    <button
-                      onClick={handleClearAllTabs}
-                      disabled={bulkStatus === 'clearing' || filteredTabs.length === 0}
-                      className="rounded-md bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 px-3 py-1.5 text-xs font-medium whitespace-nowrap"
-                    >
-                      {bulkStatus === 'clearing'
-                        ? t('clearing')
-                        : bulkStatus === 'done'
-                          ? t('cleared')
-                          : bulkStatus === 'failed'
-                            ? t('someFailed')
-                            : t('clearAllCount', { count: filteredTabs.length })}
-                    </button>
-                  </div>
-
-                  <TabClearList
-                    tabs={filteredTabs}
-                    busyTabIds={busyTabIds}
-                    failedTabIds={failedTabIds}
-                    reloadingTabIds={reloadingTabIds}
-                    onClear={handleSiteClear}
-                  />
-                </div>
-              )}
-            </section>
-
-            {selectedTypesGlobal.includes('history') && (
-              <section className="mb-8">
-                <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
-                  {t('recentHistory')}
-                </h2>
-                <HistoryList items={history} onDelete={handleDeleteHistoryItem} />
-              </section>
-            )}
-
-            <div className="pt-4 border-t border-stone-200 dark:border-stone-700 flex justify-end">
-              <button
-                onClick={resetSettings}
-                className="rounded-md border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 cursor-pointer px-3 py-1.5 text-xs"
-              >
-                {t('resetToDefaults')}
-              </button>
-            </div>
+            <ThemeSection theme={theme} onChange={setTheme} />
+            <LanguageSection language={language} onChange={setLanguage} />
           </>
         )}
+
+        {activeTab === 'global' && (
+          <GlobalSection
+            selectedTypes={selectedTypesGlobal}
+            onToggleType={toggleTypeGlobal}
+            status={globalStatus}
+            onClear={handleGlobalClear}
+            showHistory={selectedTypesGlobal.includes('history')}
+            history={filteredHistory}
+            historyFilter={historyFilter}
+            onHistoryFilterChange={setHistoryFilter}
+            historyStatus={historyBulkStatus}
+            onClearAllHistory={handleClearAllHistory}
+            onDeleteHistoryItem={handleDeleteHistoryItem}
+          />
+        )}
+
+        {activeTab === 'perSite' && (
+          <PerSiteSection
+            types={SITE_TYPES}
+            selectedTypes={selectedTypesSite}
+            onToggleType={toggleTypeSite}
+            autoReloadAfterClear={autoReloadAfterClear}
+            onAutoReloadChange={setAutoReloadAfterClear}
+            useOriginMappings={useOriginMappings}
+            onUseOriginMappingsChange={setUseOriginMappings}
+            linkedOrigins={linkedOrigins}
+            onLinkedOriginsChange={setLinkedOrigins}
+            siteFilter={siteFilter}
+            onSiteFilterChange={setSiteFilter}
+            bulkStatus={bulkStatus}
+            onClearAllTabs={handleClearAllTabs}
+            tabs={filteredTabs}
+            busyTabIds={busyTabIds}
+            failedTabIds={failedTabIds}
+            reloadingTabIds={reloadingTabIds}
+            onClearTab={handleSiteClear}
+          />
+        )}
+
+        {activeTab === 'help' && <HelpPanel />}
       </div>
     </div>
   );

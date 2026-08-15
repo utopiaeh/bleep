@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { DangerConfirmButton } from '../../components/DangerConfirmButton';
 import { DataTypeGrid } from '../../components/DataTypeGrid';
+import { BehaviorToggles } from '../../components/popup/BehaviorToggles';
 import { StatusButton, type ClearStatus } from '../../components/StatusButton';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
@@ -9,16 +10,17 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useSettingsStore } from '../../store/settings';
 import {
   clearGlobal,
+  clearLinkedOrigin,
   clearTabData,
+  linkedOriginsFor,
   requestOriginPermission,
   siteScopedIds,
+  tabCookieStoreId,
+  tabOrigin,
 } from '../../utils/clearing';
-import { isGeckoBased } from '../../utils/browser-info';
-import { DATA_TYPES } from '../../utils/data-types';
+import { siteScopedDataTypes } from '../../utils/data-types';
 
-const QUICK_TYPES = DATA_TYPES.filter(
-  (t) => t.quick && t.siteScoped && !(t.id === 'cache' && isGeckoBased()),
-);
+const QUICK_TYPES = siteScopedDataTypes().filter((t) => t.quick);
 
 export default function App() {
   useTheme();
@@ -28,6 +30,9 @@ export default function App() {
   const selectedTypesGlobal = useSettingsStore((s) => s.selectedTypesGlobal);
   const autoReloadAfterClear = useSettingsStore((s) => s.autoReloadAfterClear);
   const setAutoReloadAfterClear = useSettingsStore((s) => s.setAutoReloadAfterClear);
+  const linkedOrigins = useSettingsStore((s) => s.linkedOrigins);
+  const useOriginMappings = useSettingsStore((s) => s.useOriginMappings);
+  const setUseOriginMappings = useSettingsStore((s) => s.setUseOriginMappings);
   const [status, setStatus] = useState<ClearStatus>('idle');
   const [tabStatus, setTabStatus] = useState<ClearStatus>('idle');
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
@@ -61,6 +66,17 @@ export default function App() {
       } else {
         const ids = siteScopedIds(selectedTypesSite);
         const ok = granted && activeTab ? await clearTabData(activeTab, ids) : false;
+        if (ok && activeTab && useOriginMappings) {
+          const origin = tabOrigin(activeTab);
+          const cookieStoreId = tabCookieStoreId(activeTab);
+          if (origin) {
+            await Promise.all(
+              linkedOriginsFor(linkedOrigins, origin).map((target) =>
+                clearLinkedOrigin(target, ids, cookieStoreId),
+              ),
+            );
+          }
+        }
         setTabStatus(ok ? 'done' : 'failed');
         if (ok && autoReloadAfterClear && activeTab?.id != null) {
           markReloading(activeTab.id);
@@ -90,15 +106,14 @@ export default function App() {
 
       <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 
-      <label className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 mb-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={autoReloadAfterClear}
-          onChange={(e) => setAutoReloadAfterClear(e.target.checked)}
-          className="accent-blue-500 cursor-pointer"
-        />
-        {t('reloadTabAfterClearing')}
-      </label>
+      <BehaviorToggles
+        autoReloadAfterClear={autoReloadAfterClear}
+        onAutoReloadChange={setAutoReloadAfterClear}
+        useOriginMappings={useOriginMappings}
+        onUseOriginMappingsChange={setUseOriginMappings}
+      />
+
+      <hr className="border-stone-200 dark:border-stone-700 my-3" />
 
       <StatusButton
         status={isReloading(activeTabId) ? 'clearing' : tabStatus}
