@@ -26,6 +26,7 @@ Account: [Chrome Web Store Developer Dashboard](https://chrome.google.com/websto
 Upload: `.output/cache-cleaner-<version>-chrome.zip`.
 
 Store listing needs:
+
 - **Detailed description** (up to 16,000 chars) — expand on the one-line
   manifest description; explain the global-vs-per-site distinction and why
   `browsingData` + `optional_host_permissions` are used.
@@ -56,6 +57,7 @@ Upload: `.output/cache-cleaner-<version>-firefox.zip` — **all submissions are 
 including self-distributed ones, so this step is mandatory even outside AMO.
 
 Store listing needs:
+
 - **Icon** — 128×128, same asset as Chrome.
 - **Screenshots** — no hard size requirement, PNG/JPG.
 - **Summary** (250 chars) and **description** (long form, supports basic
@@ -80,11 +82,11 @@ https://github.com/utopiaeh/bleep/blob/main/PRIVACY.md
 
 ## Permission justifications (copy-paste starting point)
 
-| Permission | Why |
-|---|---|
-| `storage` | Persist user settings (theme, language, selected data types) locally. |
-| `tabs` | Read the active tab's URL/id to scope a "clear this site" action, and to list open tabs for per-site selection. |
-| `browsingData` | The core clearing mechanism — cache, cookies, storage, history, etc. |
-| `scripting` | Firefox-only path: inject a content script into one open tab to clear page-scoped storage APIs that Firefox's `browsingData` can't filter by origin. |
-| `history` | Let the user view and delete individual history entries, and include History in global clears. |
+| Permission           | Why                                                                                                                                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`            | Persist user settings (theme, language, selected data types) locally.                                                                                                                                |
+| `tabs`               | Read the active tab's URL/id to scope a "clear this site" action, and to list open tabs for per-site selection.                                                                                      |
+| `browsingData`       | The core clearing mechanism — cache, cookies, storage, history, etc.                                                                                                                                 |
+| `scripting`          | Firefox-only path: inject a content script into one open tab to clear page-scoped storage APIs that Firefox's `browsingData` can't filter by origin.                                                 |
+| `history`            | Let the user view and delete individual history entries, and include History in global clears.                                                                                                       |
 | `*://*/*` (optional) | Requested on-demand, only when the user first performs a per-site clear — needed to target `browsingData.remove({origins})` (Chromium) or inject the content script (Firefox) on that specific site. |

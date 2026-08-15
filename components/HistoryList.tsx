@@ -10,13 +10,13 @@ export function HistoryList({ items, onDelete }: HistoryListProps) {
   const t = useTranslation();
 
   return (
-    <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
+    <ul className="divide-y divide-stone-200 rounded-md border border-stone-200 dark:divide-stone-700 dark:border-stone-700 max-h-80 overflow-y-auto">
       {items.map((item) => (
         <li key={item.id} className="flex items-center justify-between px-3 py-2">
           <span className="text-sm truncate max-w-md">{item.title || item.url}</span>
           <button
             onClick={() => item.url && onDelete(item.url)}
-            className="rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer px-3 py-1 text-xs"
+            className="rounded-md border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 cursor-pointer px-3 py-1 text-xs"
           >
             {t('remove')}
           </button>

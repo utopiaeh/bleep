@@ -56,7 +56,7 @@ export function DangerConfirmButton({
         </button>
         <button
           onClick={cancel}
-          className="rounded-md cursor-pointer border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 px-3 py-2 text-sm"
+          className="rounded-md cursor-pointer border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 px-3 py-2 text-sm"
         >
           {t('cancel')}
         </button>

@@ -14,7 +14,6 @@ export function detectBrowserLanguage(): ResolvedLanguage {
 }
 
 const en = {
-  // Data types
   dt_cacheStorage: 'Cache Storage',
   dt_cache: 'HTTP Cache',
   dt_indexedDB: 'IndexedDB',
@@ -26,17 +25,14 @@ const en = {
   dt_downloads: 'Download History',
   dt_formData: 'Form Data',
 
-  // Shared statuses
   clearing: 'Clearing…',
   reloading: 'Reloading…',
   cleared: 'Cleared ✓',
   failed: 'Failed',
   cancel: 'Cancel',
-  globalOnly: '(global only)',
 
-  // Popup
-  popupTitle: 'Bleep',
-  reloadTabAfterClearing: 'Reload tab after clearing',
+  popupTitle: 'Bleep - Cache Cleaner',
+  reloadTabAfterClearing: 'Hard reload tab after clearing',
   clearActiveTabOnly: 'Clear active tab only',
   failedOrDenied: 'Failed / denied',
   activeTabHint: 'Only the site open in this tab is affected.',
@@ -45,8 +41,9 @@ const en = {
   allSitesHint: 'Applies to every site, not just this tab.',
   settings: 'Settings',
 
-  // Settings page
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Settings',
+  tabGeneral: 'General',
+  tabHelp: 'Help',
   resetToDefaults: 'Reset to defaults',
   theme: 'Theme',
   themeSystem: 'System',
@@ -58,14 +55,16 @@ const en = {
   languageRussian: 'Russian',
   languageRomanian: 'Romanian',
   languageUkrainian: 'Ukrainian',
-  behavior: 'Behavior',
-  reloadTabAfterClearingPerSite: 'Reload tab after clearing (per-site only)',
-  dataTypes: 'Data types',
-  siteScopeNote:
-    "History, Download History, and Form Data can't be scoped to one site — they only clear in Global mode.",
+  reloadTabAfterClearingPerSite: 'Hard reload tab after clearing (per-site only)',
+  useOriginMappings: 'Use origin mappings',
+  linkedOrigin: 'Origin mappings (also cleared when clearing the matching site)',
+  linkedOriginSourcePlaceholder: 'https://your-app.com',
+  linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
+  addMapping: '+ Add mapping',
+  linkedOriginHint:
+    "Comma-separate multiple targets on the right. Scheme and path on either side don't matter, and a source also covers its subdomains (domain.com matches sso.domain.com too). Sites with no mapping are untouched.",
   storageKeyShareNote:
     'Local Storage and Session Storage share one browser API in Global mode — checking either one clears both.',
-  scope: 'Scope',
   scopeGlobal: 'Global',
   scopeGlobalDescription:
     "Clears the checked types for every site you've visited, not just the one you're on. No extra permission needed.",
@@ -73,15 +72,31 @@ const en = {
   scopePerSiteDescription:
     "Pick one open tab below; only that site's data is cleared, everything else is untouched. Asks for one-time site permission the first time you clear.",
   openTabsOnly: 'Only open tabs can be targeted.',
-  geckoClearNote:
-    ' This browser clears via the page itself, so unreachable (backgrounded/discarded) tabs may not fully clear.',
   filterTabsPlaceholder: 'Filter open tabs by domain…',
+  filterHistoryPlaceholder: 'Filter history by title or URL…',
   someFailed: 'Some failed',
   clearAllCount: 'Clear all ({count})',
   clear: 'Clear',
   noMatchingTabs: 'No matching tabs.',
   recentHistory: 'Recent history',
   remove: 'Remove',
+
+  helpTitle: 'How Bleep works',
+  helpPopupTitle: 'Popup',
+  helpPopupText:
+    'Click the toolbar icon. "Clear active tab" clears just the site you\'re on. "Clear all sites" clears everything, everywhere.',
+  helpScopeTitle: 'Global vs Per Site',
+  helpScopeText:
+    "Global affects every site you've visited. Per Site affects only one tab you pick. Each has its own checklist below.",
+  helpTypesTitle: 'Data types',
+  helpTypesText:
+    "Cache, Storage, and Service Workers are a site's own saved files. Cookies keep you logged in. History, Downloads, and Form Data are browser records — Global only.",
+  helpReloadTitle: 'Hard reload',
+  helpReloadText:
+    'After clearing, reloads the tab ignoring old cached files, so you see the fresh version right away.',
+  helpMappingsTitle: 'Origin mappings',
+  helpMappingsText:
+    "Some apps silently sign you back in through a separate auth/SSO domain your storage clear never touches. Map that domain in Per Site settings (site => also-clear-this) so it's cleared too — only when clearing the exact site on the left.",
 };
 
 const ru: typeof en = {
@@ -101,10 +116,9 @@ const ru: typeof en = {
   cleared: 'Очищено ✓',
   failed: 'Ошибка',
   cancel: 'Отмена',
-  globalOnly: '(только глобально)',
 
-  popupTitle: 'Bleep',
-  reloadTabAfterClearing: 'Обновить вкладку после очистки',
+  popupTitle: 'Bleep - Cache Cleaner',
+  reloadTabAfterClearing: 'Жёстко обновить вкладку после очистки',
   clearActiveTabOnly: 'Очистить текущую вкладку',
   failedOrDenied: 'Ошибка / отказано',
   activeTabHint:
@@ -115,6 +129,8 @@ const ru: typeof en = {
   settings: 'Настройки',
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Настройки',
+  tabGeneral: 'Общие',
+  tabHelp: 'Справка',
   resetToDefaults: 'Сбросить настройки',
   theme: 'Тема',
   themeSystem: 'Системная',
@@ -126,14 +142,16 @@ const ru: typeof en = {
   languageRussian: 'Русский',
   languageRomanian: 'Румынский',
   languageUkrainian: 'Украинский',
-  behavior: 'Поведение',
-  reloadTabAfterClearingPerSite: 'Обновить вкладку после очистки (только для сайта)',
-  dataTypes: 'Типы данных',
-  siteScopeNote:
-    'История, история загрузок и данные форм нельзя очистить только для одного сайта — они очищаются только в глобальном режиме.',
+  reloadTabAfterClearingPerSite: 'Жёстко обновить вкладку после очистки (только для сайта)',
+  useOriginMappings: 'Использовать сопоставления источников',
+  linkedOrigin: 'Сопоставления источников (тоже очищаются при очистке нужного сайта)',
+  linkedOriginSourcePlaceholder: 'https://your-app.com',
+  linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
+  addMapping: '+ Добавить сопоставление',
+  linkedOriginHint:
+    'Справа через запятую можно указать несколько целей. Протокол и путь неважны с любой стороны, а источник охватывает и свои поддомены (domain.com совпадёт и с sso.domain.com). Сайты без сопоставления не затрагиваются.',
   storageKeyShareNote:
     'Локальное хранилище и хранилище сессии используют один и тот же API браузера в глобальном режиме — отметка любого из них очищает оба.',
-  scope: 'Область',
   scopeGlobal: 'Глобально',
   scopeGlobalDescription:
     'Очищает отмеченные типы для всех посещённых сайтов, а не только для текущего. Доп. разрешения не нужны.',
@@ -141,15 +159,31 @@ const ru: typeof en = {
   scopePerSiteDescription:
     'Выберите одну открытую вкладку ниже; будут очищены данные только этого сайта, остальное не тронуто. При первой очистке запросит разрешение.',
   openTabsOnly: 'Доступны только открытые вкладки.',
-  geckoClearNote:
-    ' Этот браузер очищает данные через саму страницу, поэтому недоступные (фоновые/выгруженные) вкладки могут очиститься не полностью.',
   filterTabsPlaceholder: 'Фильтр открытых вкладок по домену…',
+  filterHistoryPlaceholder: 'Фильтр истории по названию или URL…',
   someFailed: 'Часть не удалась',
   clearAllCount: 'Очистить все ({count})',
   clear: 'Очистить',
   noMatchingTabs: 'Нет подходящих вкладок.',
   recentHistory: 'Недавняя история',
   remove: 'Удалить',
+
+  helpTitle: 'Как работает Bleep',
+  helpPopupTitle: 'Всплывающее окно',
+  helpPopupText:
+    'Нажмите на значок в панели инструментов. «Очистить текущую вкладку» очищает только открытый сайт. «Очистить все сайты» — очищает всё и везде.',
+  helpScopeTitle: 'Глобально и для сайта',
+  helpScopeText:
+    'Глобально — затрагивает все посещённые сайты. Для сайта — только одну выбранную вкладку. У каждого свой список ниже.',
+  helpTypesTitle: 'Типы данных',
+  helpTypesText:
+    'Кэш, хранилище и сервис-воркеры — это собственные файлы сайта. Cookie хранят вход в аккаунт. История, загрузки и данные форм — записи браузера, только глобально.',
+  helpReloadTitle: 'Жёсткая перезагрузка',
+  helpReloadText:
+    'После очистки вкладка перезагружается без старых файлов кэша — сразу видна свежая версия сайта.',
+  helpMappingsTitle: 'Сопоставления источников',
+  helpMappingsText:
+    'Некоторые приложения незаметно снова входят в аккаунт через отдельный домен авторизации/SSO, который очистка хранилища не затрагивает. Укажите этот домен в настройках «Для сайта» (сайт => тоже очистить это), чтобы он тоже очищался — только при очистке именно указанного слева сайта.',
 };
 
 const ro: typeof en = {
@@ -169,10 +203,9 @@ const ro: typeof en = {
   cleared: 'Șters ✓',
   failed: 'Eroare',
   cancel: 'Anulează',
-  globalOnly: '(doar global)',
 
-  popupTitle: 'Bleep',
-  reloadTabAfterClearing: 'Reîncarcă fila după ștergere',
+  popupTitle: 'Bleep - Cache Cleaner',
+  reloadTabAfterClearing: 'Reîncarcă forțat fila după ștergere',
   clearActiveTabOnly: 'Șterge doar fila activă',
   failedOrDenied: 'Eroare / refuzat',
   activeTabHint:
@@ -183,6 +216,8 @@ const ro: typeof en = {
   settings: 'Setări',
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Setări',
+  tabGeneral: 'General',
+  tabHelp: 'Ajutor',
   resetToDefaults: 'Resetează la valorile implicite',
   theme: 'Temă',
   themeSystem: 'Sistem',
@@ -194,14 +229,16 @@ const ro: typeof en = {
   languageRussian: 'Rusă',
   languageRomanian: 'Română',
   languageUkrainian: 'Ucraineană',
-  behavior: 'Comportament',
-  reloadTabAfterClearingPerSite: 'Reîncarcă fila după ștergere (doar per site)',
-  dataTypes: 'Tipuri de date',
-  siteScopeNote:
-    'Istoricul, istoricul descărcărilor și datele formularelor nu pot fi limitate la un singur site — se șterg doar în modul Global.',
+  reloadTabAfterClearingPerSite: 'Reîncarcă forțat fila după ștergere (doar per site)',
+  useOriginMappings: 'Folosește corespondențele de origini',
+  linkedOrigin: 'Corespondențe de origini (șterse și ele la ștergerea site-ului potrivit)',
+  linkedOriginSourcePlaceholder: 'https://your-app.com',
+  linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
+  addMapping: '+ Adaugă corespondență',
+  linkedOriginHint:
+    'Separă mai multe ținte prin virgulă în dreapta. Schema și calea nu contează pe nicio parte, iar o sursă acoperă și subdomeniile ei (domain.com se potrivește și cu sso.domain.com). Site-urile fără corespondență rămân neatinse.',
   storageKeyShareNote:
     'Stocarea locală și stocarea sesiunii folosesc același API al browserului în modul Global — bifarea uneia le șterge pe ambele.',
-  scope: 'Domeniu de acțiune',
   scopeGlobal: 'Global',
   scopeGlobalDescription:
     'Șterge tipurile bifate pentru toate site-urile vizitate, nu doar pentru cel curent. Nu necesită permisiuni extra.',
@@ -209,15 +246,31 @@ const ro: typeof en = {
   scopePerSiteDescription:
     'Alege o filă deschisă mai jos; se șterg doar datele acelui site, restul rămân neafectate. Va cere permisiune la prima ștergere.',
   openTabsOnly: 'Pot fi ținta doar filele deschise.',
-  geckoClearNote:
-    ' Acest browser șterge prin pagina însăși, așa că filele inaccesibile (fundal/descărcate) ar putea să nu se șteargă complet.',
   filterTabsPlaceholder: 'Filtrează filele deschise după domeniu…',
+  filterHistoryPlaceholder: 'Filtrează istoricul după titlu sau URL…',
   someFailed: 'Unele au eșuat',
   clearAllCount: 'Șterge toate ({count})',
   clear: 'Șterge',
   noMatchingTabs: 'Nicio filă corespunzătoare.',
   recentHistory: 'Istoric recent',
   remove: 'Elimină',
+
+  helpTitle: 'Cum funcționează Bleep',
+  helpPopupTitle: 'Fereastra popup',
+  helpPopupText:
+    'Apasă pe iconița din bara de instrumente. „Șterge doar fila activă” curăță doar site-ul deschis. „Șterge toate site-urile” curăță tot, peste tot.',
+  helpScopeTitle: 'Global și Per site',
+  helpScopeText:
+    'Global afectează toate site-urile vizitate. Per site afectează doar fila aleasă. Fiecare are propria listă mai jos.',
+  helpTypesTitle: 'Tipuri de date',
+  helpTypesText:
+    'Cache, stocare și service worker-i sunt fișierele proprii ale site-ului. Cookie-urile te țin autentificat. Istoricul, descărcările și datele formularelor sunt înregistrări ale browserului — doar Global.',
+  helpReloadTitle: 'Reîncărcare forțată',
+  helpReloadText:
+    'După ștergere, fila se reîncarcă ignorând fișierele vechi din cache, ca să vezi imediat versiunea nouă.',
+  helpMappingsTitle: 'Corespondențe de origini',
+  helpMappingsText:
+    'Unele aplicații te autentifică din nou, discret, printr-un domeniu separat de autentificare/SSO pe care ștergerea stocării nu îl atinge. Adaugă acel domeniu în setările „Per site” (site => șterge și acesta) ca să fie șters și el — doar la ștergerea exactă a site-ului din stânga.',
 };
 
 const uk: typeof en = {
@@ -237,10 +290,9 @@ const uk: typeof en = {
   cleared: 'Очищено ✓',
   failed: 'Помилка',
   cancel: 'Скасувати',
-  globalOnly: '(лише глобально)',
 
-  popupTitle: 'Bleep',
-  reloadTabAfterClearing: 'Оновити вкладку після очищення',
+  popupTitle: 'Bleep - Cache Cleaner',
+  reloadTabAfterClearing: 'Жорстко оновити вкладку після очищення',
   clearActiveTabOnly: 'Очистити лише поточну вкладку',
   failedOrDenied: 'Помилка / відмовлено',
   activeTabHint:
@@ -251,6 +303,8 @@ const uk: typeof en = {
   settings: 'Налаштування',
 
   settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Налаштування',
+  tabGeneral: 'Загальні',
+  tabHelp: 'Довідка',
   resetToDefaults: 'Скинути налаштування',
   theme: 'Тема',
   themeSystem: 'Системна',
@@ -262,14 +316,16 @@ const uk: typeof en = {
   languageRussian: 'Російська',
   languageRomanian: 'Румунська',
   languageUkrainian: 'Українська',
-  behavior: 'Поведінка',
-  reloadTabAfterClearingPerSite: 'Оновити вкладку після очищення (лише для сайту)',
-  dataTypes: 'Типи даних',
-  siteScopeNote:
-    'Історію, історію завантажень і дані форм неможливо очистити лише для одного сайту — вони очищаються лише в глобальному режимі.',
+  reloadTabAfterClearingPerSite: 'Жорстко оновити вкладку після очищення (лише для сайту)',
+  useOriginMappings: "Використовувати зіставлення джерел",
+  linkedOrigin: "Зіставлення джерел (теж очищаються при очищенні відповідного сайту)",
+  linkedOriginSourcePlaceholder: 'https://your-app.com',
+  linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
+  addMapping: '+ Додати зіставлення',
+  linkedOriginHint:
+    "Декілька цілей справа можна вказати через кому. Протокол і шлях неважливі з обох боків, а джерело охоплює й свої піддомени (domain.com збігається і з sso.domain.com). Сайти без зіставлення не зачіпаються.",
   storageKeyShareNote:
     'Локальне сховище та сховище сесії використовують один і той самий API браузера в глобальному режимі — позначення будь-якого з них очищає обидва.',
-  scope: 'Область',
   scopeGlobal: 'Глобально',
   scopeGlobalDescription:
     'Очищає позначені типи для всіх відвіданих сайтів, а не лише для поточного. Додаткові дозволи не потрібні.',
@@ -277,15 +333,31 @@ const uk: typeof en = {
   scopePerSiteDescription:
     'Виберіть одну відкриту вкладку нижче; будуть очищені дані лише цього сайту, решта не торкнеться. При першому очищенні запитає дозвіл.',
   openTabsOnly: 'Можна вибрати лише відкриті вкладки.',
-  geckoClearNote:
-    ' Цей браузер очищає дані через саму сторінку, тому недоступні (фонові/вивантажені) вкладки можуть очиститися не повністю.',
   filterTabsPlaceholder: 'Фільтр відкритих вкладок за доменом…',
+  filterHistoryPlaceholder: 'Фільтр історії за назвою або URL…',
   someFailed: 'Частина не вдалася',
   clearAllCount: 'Очистити всі ({count})',
   clear: 'Очистити',
   noMatchingTabs: 'Немає відповідних вкладок.',
   recentHistory: 'Недавня історія',
   remove: 'Видалити',
+
+  helpTitle: 'Як працює Bleep',
+  helpPopupTitle: 'Спливаюче вікно',
+  helpPopupText:
+    'Натисніть на значок на панелі інструментів. «Очистити лише поточну вкладку» очищає лише відкритий сайт. «Очистити всі сайти» очищає все й усюди.',
+  helpScopeTitle: 'Глобально і для сайту',
+  helpScopeText:
+    'Глобально стосується всіх відвіданих сайтів. Для сайту — лише однієї обраної вкладки. У кожного свій список нижче.',
+  helpTypesTitle: 'Типи даних',
+  helpTypesText:
+    'Кеш, сховище та сервіс-воркери — власні файли сайту. Cookie зберігають вхід в акаунт. Історія, завантаження та дані форм — записи браузера, лише глобально.',
+  helpReloadTitle: 'Жорстке оновлення',
+  helpReloadText:
+    'Після очищення вкладка оновлюється без старих файлів кешу — одразу видно свіжу версію сайту.',
+  helpMappingsTitle: 'Зіставлення джерел',
+  helpMappingsText:
+    "Деякі застосунки непомітно повторно авторизують вас через окремий домен авторизації/SSO, якого очищення сховища не торкається. Додайте цей домен у налаштуваннях «Для сайту» (сайт => теж очистити це), щоб він теж очищався — лише при очищенні саме вказаного зліва сайту.",
 };
 
 export type TranslationKey = keyof typeof en;

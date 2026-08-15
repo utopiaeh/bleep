@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import { DangerConfirmButton } from '../../components/DangerConfirmButton';
 import { DataTypeGrid } from '../../components/DataTypeGrid';
+import { BehaviorToggles } from '../../components/popup/BehaviorToggles';
 import { StatusButton, type ClearStatus } from '../../components/StatusButton';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
@@ -9,21 +10,29 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useSettingsStore } from '../../store/settings';
 import {
   clearGlobal,
+  clearLinkedOrigin,
   clearTabData,
+  linkedOriginsFor,
   requestOriginPermission,
   siteScopedIds,
+  tabCookieStoreId,
+  tabOrigin,
 } from '../../utils/clearing';
-import { DATA_TYPES } from '../../utils/data-types';
+import { siteScopedDataTypes } from '../../utils/data-types';
 
-const QUICK_TYPES = DATA_TYPES.filter((t) => t.quick);
+const QUICK_TYPES = siteScopedDataTypes().filter((t) => t.quick);
 
 export default function App() {
   useTheme();
   const t = useTranslation();
-  const selectedTypes = useSettingsStore((s) => s.selectedTypes);
-  const toggleType = useSettingsStore((s) => s.toggleType);
+  const selectedTypesSite = useSettingsStore((s) => s.selectedTypesSite);
+  const toggleTypeSite = useSettingsStore((s) => s.toggleTypeSite);
+  const selectedTypesGlobal = useSettingsStore((s) => s.selectedTypesGlobal);
   const autoReloadAfterClear = useSettingsStore((s) => s.autoReloadAfterClear);
   const setAutoReloadAfterClear = useSettingsStore((s) => s.setAutoReloadAfterClear);
+  const linkedOrigins = useSettingsStore((s) => s.linkedOrigins);
+  const useOriginMappings = useSettingsStore((s) => s.useOriginMappings);
+  const setUseOriginMappings = useSettingsStore((s) => s.setUseOriginMappings);
   const [status, setStatus] = useState<ClearStatus>('idle');
   const [tabStatus, setTabStatus] = useState<ClearStatus>('idle');
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
@@ -38,7 +47,7 @@ export default function App() {
   async function handleClear() {
     setStatus('clearing');
     try {
-      await clearGlobal(selectedTypes);
+      await clearGlobal(selectedTypesGlobal);
       setStatus('done');
     } catch (err) {
       console.error('Bleep: global clear failed', err);
@@ -55,14 +64,23 @@ export default function App() {
       if (isReloading(activeTab?.id)) {
         setTabStatus('failed');
       } else {
-        const ok =
-          granted && activeTab
-            ? await clearTabData(activeTab, siteScopedIds(selectedTypes))
-            : false;
+        const ids = siteScopedIds(selectedTypesSite);
+        const ok = granted && activeTab ? await clearTabData(activeTab, ids) : false;
+        if (ok && activeTab && useOriginMappings) {
+          const origin = tabOrigin(activeTab);
+          const cookieStoreId = tabCookieStoreId(activeTab);
+          if (origin) {
+            await Promise.all(
+              linkedOriginsFor(linkedOrigins, origin).map((target) =>
+                clearLinkedOrigin(target, ids, cookieStoreId),
+              ),
+            );
+          }
+        }
         setTabStatus(ok ? 'done' : 'failed');
         if (ok && autoReloadAfterClear && activeTab?.id != null) {
           markReloading(activeTab.id);
-          browser.tabs.reload(activeTab.id);
+          browser.tabs.reload(activeTab.id, { bypassCache: true });
         }
       }
     } catch (err) {
@@ -73,7 +91,7 @@ export default function App() {
   }
 
   return (
-    <div className="w-86 p-4 bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+    <div className="w-86 p-4 bg-stone-50 text-stone-900 dark:bg-stone-800 dark:text-stone-100">
       <div className="flex items-center gap-2 mb-3">
         <img src="/icon/48.png" alt="" className="w-6 h-6" />
         <h1 className="text-lg font-semibold">{t('popupTitle')}</h1>
@@ -81,22 +99,21 @@ export default function App() {
 
       <DataTypeGrid
         types={QUICK_TYPES}
-        selected={selectedTypes}
-        onToggle={toggleType}
+        selected={selectedTypesSite}
+        onToggle={toggleTypeSite}
         className="mb-3"
       />
 
-      <hr className="border-neutral-200 dark:border-neutral-800 mb-3" />
+      <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 
-      <label className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 mb-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={autoReloadAfterClear}
-          onChange={(e) => setAutoReloadAfterClear(e.target.checked)}
-          className="accent-blue-500 cursor-pointer"
-        />
-        {t('reloadTabAfterClearing')}
-      </label>
+      <BehaviorToggles
+        autoReloadAfterClear={autoReloadAfterClear}
+        onAutoReloadChange={setAutoReloadAfterClear}
+        useOriginMappings={useOriginMappings}
+        onUseOriginMappingsChange={setUseOriginMappings}
+      />
+
+      <hr className="border-stone-200 dark:border-stone-700 my-3" />
 
       <StatusButton
         status={isReloading(activeTabId) ? 'clearing' : tabStatus}
@@ -106,7 +123,7 @@ export default function App() {
         clearingLabel={isReloading(activeTabId) ? t('reloading') : t('clearing')}
         failedLabel={t('failedOrDenied')}
       />
-      <p className="text-xs text-neutral-500 mt-1">{t('activeTabHint')}</p>
+      <p className="text-xs text-stone-500 mt-1">{t('activeTabHint')}</p>
 
       <div className="mt-3">
         <DangerConfirmButton
@@ -116,11 +133,11 @@ export default function App() {
           onConfirm={handleClear}
         />
       </div>
-      <p className="text-xs text-neutral-500 mt-1">{t('allSitesHint')}</p>
+      <p className="text-xs text-stone-500 mt-1">{t('allSitesHint')}</p>
 
       <button
         onClick={() => browser.runtime.openOptionsPage()}
-        className="w-full mt-2 rounded-md border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer py-2 text-sm"
+        className="w-full mt-2 rounded-md border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 cursor-pointer py-2 text-sm"
       >
         {t('settings')}
       </button>

@@ -72,11 +72,11 @@ required permission, so it's not requested at install time.
 
 ## Supported browsers
 
-| Browser                                             | Minimum version | Notes                                                                          |
-| --------------------------------------------------- | --------------- | ------------------------------------------------------------------------------ |
-| Chrome / Chromium / Edge / Brave                    | 88+             | Manifest V3, `scripting` API, `browsingData` origin filtering                  |
+| Browser                                             | Minimum version | Notes                                                                               |
+| --------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------- |
+| Chrome / Chromium / Edge / Brave                    | 88+             | Manifest V3, `scripting` API, `browsingData` origin filtering                       |
 | Firefox                                             | 128+            | `optional_host_permissions` support; per-site clearing via content-script injection |
-| Firefox-based forks (Zen, LibreWolf, Waterfox, ...) | Same as Firefox | Detected via `runtime.getBrowserInfo`                                          |
+| Firefox-based forks (Zen, LibreWolf, Waterfox, ...) | Same as Firefox | Detected via `runtime.getBrowserInfo`                                               |
 
 Load unpacked for manual testing:
 
