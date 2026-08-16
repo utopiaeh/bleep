@@ -33,7 +33,7 @@ const SITE_TYPES = siteScopedDataTypes();
 export default function App() {
   useTheme();
   const t = useTranslation();
-  const [activeTab, setActiveTab] = useState<OptionsTab>('general');
+  const [activeTab, setActiveTab] = useState<OptionsTab>('perSite');
   const {
     selectedTypesGlobal,
     selectedTypesSite,

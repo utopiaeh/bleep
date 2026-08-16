@@ -23,7 +23,7 @@ export function DataTypeGrid({
     <ul className={`grid ${columns === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 ${className}`}>
       {types.map((type) => (
         <li key={type.id}>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
             <input
               type="checkbox"
               checked={selected.includes(type.id)}

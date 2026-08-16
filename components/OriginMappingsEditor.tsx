@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
-import { parseOriginMappings } from '../utils/clearing';
+import { isValidHost, parseOriginMappings } from '../utils/clearing';
 
 interface Row {
   source: string;
@@ -14,8 +14,23 @@ function rowsFromValue(value: string): Row[] {
 function valueFromRows(rows: Row[]): string {
   return rows
     .filter((r) => r.source.trim() && r.targets.trim())
-    .map((r) => `${r.source.trim()} => ${r.targets.trim()}`)
+    .map((r) => `${r.source.trim()} => ${r.targets.trim().replace(/[\n,]+/g, ', ')}`)
     .join('\n');
+}
+
+function targetList(targets: string): string[] {
+  return targets
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function sourceInvalid(row: Row): boolean {
+  return row.source.trim() !== '' && !isValidHost(row.source);
+}
+
+function targetsInvalid(row: Row): boolean {
+  return targetList(row.targets).some((target) => !isValidHost(target));
 }
 
 interface OriginMappingsEditorProps {
@@ -31,10 +46,7 @@ export function OriginMappingsEditor({ value, onChange }: OriginMappingsEditorPr
   // (the popup never writes it), so there's no external change to sync back in. That
   // also means a half-typed row (e.g. source filled, target still empty) stays visible
   // instead of vanishing — only fully-blank rows get dropped, and only on save.
-  const [rows, setRows] = useState<Row[]>(() => {
-    const parsed = rowsFromValue(value);
-    return parsed.length > 0 ? parsed : [{ ...EMPTY_ROW }];
-  });
+  const [rows, setRows] = useState<Row[]>(() => rowsFromValue(value));
 
   function commit(next: Row[]) {
     setRows(next);
@@ -46,8 +58,7 @@ export function OriginMappingsEditor({ value, onChange }: OriginMappingsEditorPr
   }
 
   function removeRow(index: number) {
-    const next = rows.filter((_, i) => i !== index);
-    commit(next.length > 0 ? next : [{ ...EMPTY_ROW }]);
+    commit(rows.filter((_, i) => i !== index));
   }
 
   function addRow() {
@@ -59,22 +70,28 @@ export function OriginMappingsEditor({ value, onChange }: OriginMappingsEditorPr
       <label className="block text-sm mb-1">{t('linkedOrigin')}</label>
       <div className="space-y-2 mb-2">
         {rows.map((row, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <input
-              type="text"
-              value={row.source}
-              onChange={(e) => updateRow(i, { source: e.target.value })}
-              placeholder={t('linkedOriginSourcePlaceholder')}
-              className="flex-1 min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
-            />
-            <span className="text-stone-500 text-sm shrink-0">→</span>
-            <input
-              type="text"
-              value={row.targets}
-              onChange={(e) => updateRow(i, { targets: e.target.value })}
-              placeholder={t('linkedOriginTargetPlaceholder')}
-              className="flex-1 min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
-            />
+          <div key={i} className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <input
+                type="text"
+                value={row.source}
+                onChange={(e) => updateRow(i, { source: e.target.value })}
+                placeholder={t('linkedOriginSourcePlaceholder')}
+                className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
+              />
+              {sourceInvalid(row) && <p className="text-xs text-red-500 mt-1">{t('linkedOriginInvalidHint')}</p>}
+            </div>
+            <span className="text-stone-500 text-sm shrink-0 mt-1.5">→</span>
+            <div className="flex-1 min-w-0">
+              <textarea
+                value={row.targets}
+                onChange={(e) => updateRow(i, { targets: e.target.value })}
+                placeholder={t('linkedOriginTargetPlaceholder')}
+                rows={1}
+                className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500 resize-y"
+              />
+              {targetsInvalid(row) && <p className="text-xs text-red-500 mt-1">{t('linkedOriginInvalidHint')}</p>}
+            </div>
             <button
               onClick={() => removeRow(i)}
               aria-label={t('remove')}
