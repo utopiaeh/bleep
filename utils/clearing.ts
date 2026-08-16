@@ -209,6 +209,16 @@ function extractHostname(input: string): string {
   }
 }
 
+const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
+
+/** Loose check for "does this look like a domain" (e.g. rejects "asdasd"), used for
+ * inline validation hints only — matching itself (linkedOriginsFor) doesn't call this. */
+export function isValidHost(input: string): boolean {
+  const host = extractHostname(input);
+  if (!host) return false;
+  return host === 'localhost' || DOMAIN_RE.test(host);
+}
+
 /** One mapping per line: `source => target1, target2`. Lines with no `=>` (or an
  * empty source/target) are ignored. `source` is kept as typed (matching extracts
  * its hostname on demand); targets are normalized to full origins up front since
@@ -236,13 +246,16 @@ export function parseOriginMappings(raw: string): OriginMapping[] {
 
 /** Matches regardless of scheme or path, and treats the mapping's source as covering
  * its own subdomains too — e.g. a source of "domain.com" also matches
- * "sso.domain.com". A site with no matching mapping gets none. */
+ * "sso.domain.com". A site with no matching mapping gets none. A mapping with an
+ * invalid-looking source or any invalid-looking target is skipped entirely — the
+ * editor shows these as errors instead of silently acting on them. */
 export function linkedOriginsFor(raw: string, activeOrigin: string): string[] {
   const activeHost = extractHostname(activeOrigin);
   return parseOriginMappings(raw)
+    .filter((m) => isValidHost(m.source) && m.targets.every(isValidHost))
     .filter((m) => {
       const sourceHost = extractHostname(m.source);
-      return sourceHost !== '' && (activeHost === sourceHost || activeHost.endsWith(`.${sourceHost}`));
+      return activeHost === sourceHost || activeHost.endsWith(`.${sourceHost}`);
     })
     .flatMap((m) => m.targets);
 }

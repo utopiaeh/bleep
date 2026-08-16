@@ -17,7 +17,7 @@ export function BehaviorToggles({
 
   return (
     <>
-      <label className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 mb-2 cursor-pointer">
+      <label className="inline-flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 mb-2 cursor-pointer">
         <input
           type="checkbox"
           checked={autoReloadAfterClear}
@@ -27,7 +27,7 @@ export function BehaviorToggles({
         {t('reloadTabAfterClearing')}
       </label>
 
-      <label className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 cursor-pointer">
+      <label className="inline-flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 cursor-pointer">
         <input
           type="checkbox"
           checked={useOriginMappings}

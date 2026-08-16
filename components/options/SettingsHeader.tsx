@@ -22,7 +22,7 @@ export function SettingsHeader({ activeTab, onTabChange, onReset }: SettingsHead
   return (
     <div className="flex items-center justify-between mb-6 border-b border-stone-200 dark:border-stone-700">
       <div className="flex gap-4">
-        {(['general', 'global', 'perSite', 'help'] as const).map((tab) => (
+        {(['perSite', 'global', 'general', 'help'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => onTabChange(tab)}

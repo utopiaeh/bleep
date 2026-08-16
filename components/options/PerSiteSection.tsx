@@ -60,31 +60,31 @@ export function PerSiteSection({
 
       <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 
-      <label className="flex items-center gap-2 text-sm cursor-pointer mb-3">
-        <input
-          type="checkbox"
-          checked={autoReloadAfterClear}
-          onChange={(e) => onAutoReloadChange(e.target.checked)}
-          className="accent-blue-500 cursor-pointer"
-        />
-        {t('reloadTabAfterClearingPerSite')}
-      </label>
+      <div className="flex flex-col gap-2 mb-3">
+        <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={autoReloadAfterClear}
+            onChange={(e) => onAutoReloadChange(e.target.checked)}
+            className="accent-blue-500 cursor-pointer"
+          />
+          {t('reloadTabAfterClearingPerSite')}
+        </label>
 
-      <label className="flex items-center gap-2 text-sm cursor-pointer mb-3">
-        <input
-          type="checkbox"
-          checked={useOriginMappings}
-          onChange={(e) => onUseOriginMappingsChange(e.target.checked)}
-          className="accent-blue-500 cursor-pointer"
-        />
-        {t('useOriginMappings')}
-      </label>
+        <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={useOriginMappings}
+            onChange={(e) => onUseOriginMappingsChange(e.target.checked)}
+            className="accent-blue-500 cursor-pointer"
+          />
+          {t('useOriginMappings')}
+        </label>
+      </div>
 
-      {useOriginMappings && (
-        <div className="mb-3 max-w-xl">
-          <OriginMappingsEditor value={linkedOrigins} onChange={onLinkedOriginsChange} />
-        </div>
-      )}
+      <div className="mb-3 max-w-xl">
+        <OriginMappingsEditor value={linkedOrigins} onChange={onLinkedOriginsChange} />
+      </div>
 
       <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 

@@ -61,6 +61,7 @@ const en = {
   linkedOriginSourcePlaceholder: 'https://your-app.com',
   linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
   addMapping: '+ Add mapping',
+  linkedOriginInvalidHint: "Doesn't look like a valid domain",
   linkedOriginHint:
     "Comma-separate multiple targets on the right. Scheme and path on either side don't matter, and a source also covers its subdomains (domain.com matches sso.domain.com too). Sites with no mapping are untouched.",
   storageKeyShareNote:
@@ -97,6 +98,9 @@ const en = {
   helpMappingsTitle: 'Origin mappings',
   helpMappingsText:
     "Some apps silently sign you back in through a separate auth/SSO domain your storage clear never touches. Map that domain in Per Site settings (site => also-clear-this) so it's cleared too — only when clearing the exact site on the left.",
+  helpFeedbackTitle: 'Feedback',
+  helpFeedbackText: 'Found a bug or have a feature request?',
+  helpFeedbackLink: 'Open an issue on GitHub',
 };
 
 const ru: typeof en = {
@@ -148,6 +152,7 @@ const ru: typeof en = {
   linkedOriginSourcePlaceholder: 'https://your-app.com',
   linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
   addMapping: '+ Добавить сопоставление',
+  linkedOriginInvalidHint: 'Похоже, это не действительный домен',
   linkedOriginHint:
     'Справа через запятую можно указать несколько целей. Протокол и путь неважны с любой стороны, а источник охватывает и свои поддомены (domain.com совпадёт и с sso.domain.com). Сайты без сопоставления не затрагиваются.',
   storageKeyShareNote:
@@ -184,6 +189,9 @@ const ru: typeof en = {
   helpMappingsTitle: 'Сопоставления источников',
   helpMappingsText:
     'Некоторые приложения незаметно снова входят в аккаунт через отдельный домен авторизации/SSO, который очистка хранилища не затрагивает. Укажите этот домен в настройках «Для сайта» (сайт => тоже очистить это), чтобы он тоже очищался — только при очистке именно указанного слева сайта.',
+  helpFeedbackTitle: 'Обратная связь',
+  helpFeedbackText: 'Нашли баг или есть предложение?',
+  helpFeedbackLink: 'Открыть issue на GitHub',
 };
 
 const ro: typeof en = {
@@ -235,6 +243,7 @@ const ro: typeof en = {
   linkedOriginSourcePlaceholder: 'https://your-app.com',
   linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
   addMapping: '+ Adaugă corespondență',
+  linkedOriginInvalidHint: 'Nu pare a fi un domeniu valid',
   linkedOriginHint:
     'Separă mai multe ținte prin virgulă în dreapta. Schema și calea nu contează pe nicio parte, iar o sursă acoperă și subdomeniile ei (domain.com se potrivește și cu sso.domain.com). Site-urile fără corespondență rămân neatinse.',
   storageKeyShareNote:
@@ -271,6 +280,9 @@ const ro: typeof en = {
   helpMappingsTitle: 'Corespondențe de origini',
   helpMappingsText:
     'Unele aplicații te autentifică din nou, discret, printr-un domeniu separat de autentificare/SSO pe care ștergerea stocării nu îl atinge. Adaugă acel domeniu în setările „Per site” (site => șterge și acesta) ca să fie șters și el — doar la ștergerea exactă a site-ului din stânga.',
+  helpFeedbackTitle: 'Feedback',
+  helpFeedbackText: 'Ai găsit un bug sau ai o sugestie?',
+  helpFeedbackLink: 'Deschide un issue pe GitHub',
 };
 
 const uk: typeof en = {
@@ -322,6 +334,7 @@ const uk: typeof en = {
   linkedOriginSourcePlaceholder: 'https://your-app.com',
   linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
   addMapping: '+ Додати зіставлення',
+  linkedOriginInvalidHint: 'Це не схоже на дійсний домен',
   linkedOriginHint:
     "Декілька цілей справа можна вказати через кому. Протокол і шлях неважливі з обох боків, а джерело охоплює й свої піддомени (domain.com збігається і з sso.domain.com). Сайти без зіставлення не зачіпаються.",
   storageKeyShareNote:
@@ -358,6 +371,9 @@ const uk: typeof en = {
   helpMappingsTitle: 'Зіставлення джерел',
   helpMappingsText:
     "Деякі застосунки непомітно повторно авторизують вас через окремий домен авторизації/SSO, якого очищення сховища не торкається. Додайте цей домен у налаштуваннях «Для сайту» (сайт => теж очистити це), щоб він теж очищався — лише при очищенні саме вказаного зліва сайту.",
+  helpFeedbackTitle: 'Зворотний зв’язок',
+  helpFeedbackText: 'Знайшли помилку чи маєте пропозицію?',
+  helpFeedbackLink: 'Відкрити issue на GitHub',
 };
 
 export type TranslationKey = keyof typeof en;
