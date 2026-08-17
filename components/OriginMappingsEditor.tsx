@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { isValidHost, parseOriginMappings } from '../utils/clearing';
 
@@ -8,7 +8,10 @@ interface Row {
 }
 
 function rowsFromValue(value: string): Row[] {
-  return parseOriginMappings(value).map((m) => ({ source: m.source, targets: m.targets.join(', ') }));
+  return parseOriginMappings(value).map((m) => ({
+    source: m.source,
+    targets: m.targets.join(', '),
+  }));
 }
 
 function valueFromRows(rows: Row[]): string {
@@ -33,6 +36,13 @@ function targetsInvalid(row: Row): boolean {
   return targetList(row.targets).some((target) => !isValidHost(target));
 }
 
+const TARGETS_MAX_HEIGHT_PX = 160;
+
+function autoResize(el: HTMLTextAreaElement) {
+  el.style.height = 'auto';
+  el.style.height = `${Math.min(el.scrollHeight, TARGETS_MAX_HEIGHT_PX)}px`;
+}
+
 interface OriginMappingsEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -42,13 +52,15 @@ const EMPTY_ROW: Row = { source: '', targets: '' };
 
 export function OriginMappingsEditor({ value, onChange }: OriginMappingsEditorProps) {
   const t = useTranslation();
-  // Local state owns the editing session — this is the only editor of linkedOrigins
-  // (the popup never writes it), so there's no external change to sync back in. That
-  // also means a half-typed row (e.g. source filled, target still empty) stays visible
-  // instead of vanishing — only fully-blank rows get dropped, and only on save.
   const [rows, setRows] = useState<Row[]>(() => rowsFromValue(value));
+  const editedRef = useRef(false);
+
+  useEffect(() => {
+    if (!editedRef.current) setRows(rowsFromValue(value));
+  }, [value]);
 
   function commit(next: Row[]) {
+    editedRef.current = true;
     setRows(next);
     onChange(valueFromRows(next));
   }
@@ -79,18 +91,28 @@ export function OriginMappingsEditor({ value, onChange }: OriginMappingsEditorPr
                 placeholder={t('linkedOriginSourcePlaceholder')}
                 className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
               />
-              {sourceInvalid(row) && <p className="text-xs text-red-500 mt-1">{t('linkedOriginInvalidHint')}</p>}
+              {sourceInvalid(row) && (
+                <p className="text-xs text-red-500 mt-1">{t('linkedOriginInvalidHint')}</p>
+              )}
             </div>
             <span className="text-stone-500 text-sm shrink-0 mt-1.5">→</span>
             <div className="flex-1 min-w-0">
               <textarea
                 value={row.targets}
-                onChange={(e) => updateRow(i, { targets: e.target.value })}
+                onChange={(e) => {
+                  updateRow(i, { targets: e.target.value });
+                  autoResize(e.target);
+                }}
+                ref={(el) => {
+                  if (el) autoResize(el);
+                }}
                 placeholder={t('linkedOriginTargetPlaceholder')}
                 rows={1}
-                className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500 resize-y"
+                className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500 resize-y overflow-y-auto"
               />
-              {targetsInvalid(row) && <p className="text-xs text-red-500 mt-1">{t('linkedOriginInvalidHint')}</p>}
+              {targetsInvalid(row) && (
+                <p className="text-xs text-red-500 mt-1">{t('linkedOriginInvalidHint')}</p>
+              )}
             </div>
             <button
               onClick={() => removeRow(i)}
