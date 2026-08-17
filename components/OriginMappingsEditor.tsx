@@ -108,7 +108,7 @@ export function OriginMappingsEditor({ value, onChange }: OriginMappingsEditorPr
                 }}
                 placeholder={t('linkedOriginTargetPlaceholder')}
                 rows={1}
-                className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500 resize-none overflow-y-auto"
+                className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500 resize-y overflow-y-auto"
               />
               {targetsInvalid(row) && (
                 <p className="text-xs text-red-500 mt-1">{t('linkedOriginInvalidHint')}</p>
