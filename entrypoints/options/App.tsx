@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { browser, type Browser } from 'wxt/browser';
+import { HelpPanel } from '../../components/HelpPanel';
 import { GlobalSection } from '../../components/options/GlobalSection';
+import { LanguageSection } from '../../components/options/LanguageSection';
 import { PerSiteSection } from '../../components/options/PerSiteSection';
 import { SettingsHeader, type OptionsTab } from '../../components/options/SettingsHeader';
-import { LanguageSection } from '../../components/options/LanguageSection';
 import { ThemeSection } from '../../components/options/ThemeSection';
-import { HelpPanel } from '../../components/HelpPanel';
 import { type ClearStatus } from '../../components/StatusButton';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
@@ -17,18 +17,22 @@ import {
   clearLinkedOrigin,
   clearTab,
   clearTabData,
+  dedupeSitesByHostname,
   linkedOriginsFor,
   requestOriginPermission,
   siteScopedIds,
   tabCookieStoreId,
   tabDomain,
   tabOrigin,
+  type VisitedSite,
 } from '../../utils/clearing';
+import { mapWithConcurrency } from '../../utils/concurrency';
 import { siteScopedDataTypes } from '../../utils/data-types';
 
 type Tab = Browser.tabs.Tab;
 
 const SITE_TYPES = siteScopedDataTypes();
+const VISITED_CLEAR_CONCURRENCY = 3;
 
 export default function App() {
   useTheme();
@@ -61,6 +65,12 @@ export default function App() {
   const [historyFilter, setHistoryFilter] = useState('');
   const [historyBulkStatus, setHistoryBulkStatus] = useState<ClearStatus>('idle');
   const [globalStatus, setGlobalStatus] = useState<ClearStatus>('idle');
+  const [visitedHistory, setVisitedHistory] = useState<Browser.history.HistoryItem[]>([]);
+  const [visitedSiteFilter, setVisitedSiteFilter] = useState('');
+  const [busyVisitedHostnames, setBusyVisitedHostnames] = useState<Set<string>>(new Set());
+  const [failedVisitedHostnames, setFailedVisitedHostnames] = useState<Set<string>>(new Set());
+  const [visitedBulkStatus, setVisitedBulkStatus] = useState<ClearStatus>('idle');
+  const [clearedHostnames, setClearedHostnames] = useState<Set<string>>(new Set());
   const { reloadingTabIds, markReloading, isReloading } = useReloadGuard();
 
   useEffect(() => {
@@ -75,6 +85,10 @@ export default function App() {
     }
   }, [selectedTypesGlobal]);
 
+  useEffect(() => {
+    browser.history.search({ text: '', maxResults: 1000 }).then(setVisitedHistory);
+  }, []);
+
   const filteredTabs = useMemo(() => {
     const q = siteFilter.trim().toLowerCase();
     if (!q) return tabs;
@@ -86,6 +100,20 @@ export default function App() {
     if (!q) return history;
     return history.filter((item) => (item.title ?? item.url ?? '').toLowerCase().includes(q));
   }, [history, historyFilter]);
+
+  const visitedSites = useMemo(
+    () =>
+      dedupeSitesByHostname(visitedHistory.map((item) => item.url)).filter(
+        (site) => !clearedHostnames.has(site.hostname),
+      ),
+    [visitedHistory, clearedHostnames],
+  );
+
+  const filteredVisitedSites = useMemo(() => {
+    const q = visitedSiteFilter.trim().toLowerCase();
+    if (!q) return visitedSites;
+    return visitedSites.filter((site) => site.hostname.toLowerCase().includes(q));
+  }, [visitedSites, visitedSiteFilter]);
 
   async function handleGlobalClear() {
     setGlobalStatus('clearing');
@@ -192,6 +220,80 @@ export default function App() {
     setTimeout(() => setBulkStatus('idle'), 1500);
   }
 
+  async function clearVisitedSite(site: VisitedSite): Promise<boolean> {
+    const ids = siteScopedIds(selectedTypesSite);
+    await clearLinkedOrigin(site.origin, ids);
+    if (useOriginMappings) {
+      await Promise.all(
+        linkedOriginsFor(linkedOrigins, site.origin).map((target) =>
+          clearLinkedOrigin(target, ids),
+        ),
+      );
+    }
+    return true;
+  }
+
+  async function handleClearVisitedSite(site: VisitedSite) {
+    setBusyVisitedHostnames((s) => new Set(s).add(site.hostname));
+    setFailedVisitedHostnames((s) => {
+      const next = new Set(s);
+      next.delete(site.hostname);
+      return next;
+    });
+    try {
+      const granted = await requestOriginPermission();
+      if (!granted) throw new Error('permission denied');
+      await clearVisitedSite(site);
+      setClearedHostnames((s) => new Set(s).add(site.hostname));
+    } catch (err) {
+      console.error('Bleep: visited site clear failed', err);
+      setFailedVisitedHostnames((s) => new Set(s).add(site.hostname));
+    }
+    setBusyVisitedHostnames((s) => {
+      const next = new Set(s);
+      next.delete(site.hostname);
+      return next;
+    });
+  }
+
+  async function handleClearAllVisitedSites() {
+    const targets = filteredVisitedSites;
+    if (targets.length === 0) return;
+    setVisitedBulkStatus('clearing');
+    try {
+      const granted = await requestOriginPermission();
+      if (!granted) {
+        setVisitedBulkStatus('failed');
+        setTimeout(() => setVisitedBulkStatus('idle'), 1500);
+        return;
+      }
+      setBusyVisitedHostnames(new Set(targets.map((s) => s.hostname)));
+      const results = await mapWithConcurrency(targets, VISITED_CLEAR_CONCURRENCY, async (site) => {
+        try {
+          await clearVisitedSite(site);
+          return { site, ok: true };
+        } catch (err) {
+          console.error('Bleep: visited site clear failed', site.hostname, err);
+          return { site, ok: false };
+        }
+      });
+      const failed = new Set<string>();
+      const cleared = new Set<string>();
+      for (const { site, ok } of results) {
+        if (ok) cleared.add(site.hostname);
+        else failed.add(site.hostname);
+      }
+      setClearedHostnames((s) => new Set([...s, ...cleared]));
+      setFailedVisitedHostnames(failed);
+      setVisitedBulkStatus(failed.size === 0 ? 'done' : 'failed');
+    } catch (err) {
+      console.error('Bleep: clear-all-visited-sites failed', err);
+      setVisitedBulkStatus('failed');
+    }
+    setBusyVisitedHostnames(new Set());
+    setTimeout(() => setVisitedBulkStatus('idle'), 1500);
+  }
+
   async function handleDeleteHistoryItem(url: string) {
     await browser.history.deleteUrl({ url });
     setHistory((h) => h.filter((item) => item.url !== url));
@@ -202,7 +304,9 @@ export default function App() {
     setHistoryBulkStatus('clearing');
     try {
       await Promise.all(
-        filteredHistory.map((item) => (item.url ? browser.history.deleteUrl({ url: item.url }) : undefined)),
+        filteredHistory.map((item) =>
+          item.url ? browser.history.deleteUrl({ url: item.url }) : undefined,
+        ),
       );
       const removed = new Set(filteredHistory.map((item) => item.url));
       setHistory((h) => h.filter((item) => !removed.has(item.url)));
@@ -267,6 +371,14 @@ export default function App() {
             failedTabIds={failedTabIds}
             reloadingTabIds={reloadingTabIds}
             onClearTab={handleSiteClear}
+            visitedSiteFilter={visitedSiteFilter}
+            onVisitedSiteFilterChange={setVisitedSiteFilter}
+            visitedSites={filteredVisitedSites}
+            visitedBulkStatus={visitedBulkStatus}
+            onClearAllVisitedSites={handleClearAllVisitedSites}
+            busyVisitedHostnames={busyVisitedHostnames}
+            failedVisitedHostnames={failedVisitedHostnames}
+            onClearVisitedSite={handleClearVisitedSite}
           />
         )}
 

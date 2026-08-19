@@ -2,10 +2,12 @@ import type { Browser } from 'wxt/browser';
 import { useTranslation } from '../../hooks/useTranslation';
 import { isGeckoBased } from '../../utils/browser-info';
 import type { DataTypeDef, DataTypeId } from '../../utils/data-types';
+import type { VisitedSite } from '../../utils/clearing';
 import { DataTypeGrid } from '../DataTypeGrid';
 import { OriginMappingsEditor } from '../OriginMappingsEditor';
 import { type ClearStatus } from '../StatusButton';
 import { SiteTabsSection } from './SiteTabsSection';
+import { VisitedSitesSection } from './VisitedSitesSection';
 
 interface PerSiteSectionProps {
   types: DataTypeDef[];
@@ -26,6 +28,14 @@ interface PerSiteSectionProps {
   failedTabIds: Set<number>;
   reloadingTabIds: Set<number>;
   onClearTab: (tab: Browser.tabs.Tab) => void;
+  visitedSiteFilter: string;
+  onVisitedSiteFilterChange: (value: string) => void;
+  visitedSites: VisitedSite[];
+  visitedBulkStatus: ClearStatus;
+  onClearAllVisitedSites: () => void;
+  busyVisitedHostnames: Set<string>;
+  failedVisitedHostnames: Set<string>;
+  onClearVisitedSite: (site: VisitedSite) => void;
 }
 
 export function PerSiteSection({
@@ -47,6 +57,14 @@ export function PerSiteSection({
   failedTabIds,
   reloadingTabIds,
   onClearTab,
+  visitedSiteFilter,
+  onVisitedSiteFilterChange,
+  visitedSites,
+  visitedBulkStatus,
+  onClearAllVisitedSites,
+  busyVisitedHostnames,
+  failedVisitedHostnames,
+  onClearVisitedSite,
 }: PerSiteSectionProps) {
   const t = useTranslation();
 
@@ -89,18 +107,32 @@ export function PerSiteSection({
       <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 
       {!isGeckoBased() && (
-        <SiteTabsSection
-          filter={siteFilter}
-          onFilterChange={onSiteFilterChange}
-          status={bulkStatus}
-          onClearAll={onClearAllTabs}
-          tabs={tabs}
-          busyTabIds={busyTabIds}
-          failedTabIds={failedTabIds}
-          reloadingTabIds={reloadingTabIds}
-          onClearTab={onClearTab}
-        />
+        <>
+          <SiteTabsSection
+            filter={siteFilter}
+            onFilterChange={onSiteFilterChange}
+            status={bulkStatus}
+            onClearAll={onClearAllTabs}
+            tabs={tabs}
+            busyTabIds={busyTabIds}
+            failedTabIds={failedTabIds}
+            reloadingTabIds={reloadingTabIds}
+            onClearTab={onClearTab}
+          />
+          <hr className="border-stone-200 dark:border-stone-700 mb-3 mt-3" />
+        </>
       )}
+
+      <VisitedSitesSection
+        filter={visitedSiteFilter}
+        onFilterChange={onVisitedSiteFilterChange}
+        sites={visitedSites}
+        status={visitedBulkStatus}
+        onClearAll={onClearAllVisitedSites}
+        busyHostnames={busyVisitedHostnames}
+        failedHostnames={failedVisitedHostnames}
+        onClearSite={onClearVisitedSite}
+      />
     </section>
   );
 }

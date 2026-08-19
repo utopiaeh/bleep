@@ -12,6 +12,7 @@ interface StatusButtonProps {
   doneLabel?: ReactNode;
   failedLabel?: ReactNode;
   variant?: 'primary' | 'secondary';
+  size?: 'normal' | 'compact';
   className?: string;
 }
 
@@ -19,6 +20,11 @@ const VARIANT_CLASSES: Record<NonNullable<StatusButtonProps['variant']>, string>
   primary: 'bg-blue-600 hover:bg-blue-500 text-white font-medium',
   secondary:
     'border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700',
+};
+
+const SIZE_CLASSES: Record<NonNullable<StatusButtonProps['size']>, string> = {
+  normal: 'w-full py-2 text-sm',
+  compact: 'px-3 py-1.5 text-xs whitespace-nowrap',
 };
 
 export function StatusButton({
@@ -30,6 +36,7 @@ export function StatusButton({
   doneLabel,
   failedLabel,
   variant = 'primary',
+  size = 'normal',
   className = '',
 }: StatusButtonProps) {
   const t = useTranslation();
@@ -49,7 +56,7 @@ export function StatusButton({
     <button
       onClick={onClick}
       disabled={disabled || status === 'clearing'}
-      className={`w-full rounded-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 py-2 text-sm font-medium ${VARIANT_CLASSES[variant]} ${className}`}
+      className={`rounded-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 font-medium ${SIZE_CLASSES[size]} ${VARIANT_CLASSES[variant]} ${className}`}
     >
       {label}
     </button>

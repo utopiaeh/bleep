@@ -38,6 +38,7 @@ const en = {
   activeTabHint: 'Only the site open in this tab is affected.',
   clearAllSites: 'Clear all sites',
   yesClearEverything: 'Yes, clear everything',
+  yesClearAllVisited: 'Yes, clear these',
   allSitesHint: 'Applies to every site, not just this tab.',
   settings: 'Settings',
 
@@ -79,6 +80,12 @@ const en = {
   clearAllCount: 'Clear all ({count})',
   clear: 'Clear',
   noMatchingTabs: 'No matching tabs.',
+  noMatchingHistory: 'No history yet.',
+  visitedSites: 'Visited sites',
+  visitedSitesDescription:
+    "Any site from your history, not just open tabs — cleared the same way as the checklist above. On Firefox, this only clears the default container; a site open in a named container (e.g. Multi-Account Containers) needs clearing from its own open tab instead.",
+  filterVisitedSitesPlaceholder: 'Filter visited sites by domain…',
+  noMatchingSites: 'No matching sites.',
   recentHistory: 'Recent history',
   remove: 'Remove',
 
@@ -129,6 +136,7 @@ const ru: typeof en = {
     'Затрагивает только сайт, открытый в этой вкладке. При первом использовании запросит разрешение.',
   clearAllSites: 'Очистить все сайты',
   yesClearEverything: 'Да, очистить всё',
+  yesClearAllVisited: 'Да, очистить эти',
   allSitesHint: 'Применяется ко всем сайтам, не только к этой вкладке.',
   settings: 'Настройки',
 
@@ -170,6 +178,12 @@ const ru: typeof en = {
   clearAllCount: 'Очистить все ({count})',
   clear: 'Очистить',
   noMatchingTabs: 'Нет подходящих вкладок.',
+  noMatchingHistory: 'История пуста.',
+  visitedSites: 'Посещённые сайты',
+  visitedSitesDescription:
+    'Любой сайт из истории, а не только открытые вкладки — очищается так же, как и по чек-листу выше. В Firefox это очищает только контейнер по умолчанию; сайт, открытый в именованном контейнере (например, Multi-Account Containers), нужно очищать из его собственной открытой вкладки.',
+  filterVisitedSitesPlaceholder: 'Фильтр посещённых сайтов по домену…',
+  noMatchingSites: 'Нет подходящих сайтов.',
   recentHistory: 'Недавняя история',
   remove: 'Удалить',
 
@@ -220,6 +234,7 @@ const ro: typeof en = {
     'Afectează doar site-ul deschis în această filă. Va cere permisiune o singură dată la prima utilizare.',
   clearAllSites: 'Șterge toate site-urile',
   yesClearEverything: 'Da, șterge totul',
+  yesClearAllVisited: 'Da, șterge acestea',
   allSitesHint: 'Se aplică pentru toate site-urile, nu doar pentru această filă.',
   settings: 'Setări',
 
@@ -261,6 +276,12 @@ const ro: typeof en = {
   clearAllCount: 'Șterge toate ({count})',
   clear: 'Șterge',
   noMatchingTabs: 'Nicio filă corespunzătoare.',
+  noMatchingHistory: 'Niciun istoric încă.',
+  visitedSites: 'Site-uri vizitate',
+  visitedSitesDescription:
+    'Orice site din istoric, nu doar filele deschise — șters la fel ca lista de mai sus. Pe Firefox, se șterge doar containerul implicit; un site deschis într-un container numit (ex. Multi-Account Containers) trebuie șters din propria filă deschisă.',
+  filterVisitedSitesPlaceholder: 'Filtrează site-urile vizitate după domeniu…',
+  noMatchingSites: 'Niciun site corespunzător.',
   recentHistory: 'Istoric recent',
   remove: 'Elimină',
 
@@ -311,6 +332,7 @@ const uk: typeof en = {
     'Стосується лише сайту, відкритого в цій вкладці. При першому використанні запитає дозвіл.',
   clearAllSites: 'Очистити всі сайти',
   yesClearEverything: 'Так, очистити все',
+  yesClearAllVisited: 'Так, очистити ці',
   allSitesHint: 'Застосовується до всіх сайтів, не лише до цієї вкладки.',
   settings: 'Налаштування',
 
@@ -352,6 +374,12 @@ const uk: typeof en = {
   clearAllCount: 'Очистити всі ({count})',
   clear: 'Очистити',
   noMatchingTabs: 'Немає відповідних вкладок.',
+  noMatchingHistory: 'Історія порожня.',
+  visitedSites: 'Відвідані сайти',
+  visitedSitesDescription:
+    'Будь-який сайт з історії, а не лише відкриті вкладки — очищається так само, як за чек-листом вище. У Firefox це очищає лише контейнер за замовчуванням; сайт, відкритий у іменованому контейнері (напр. Multi-Account Containers), потрібно очищати з його власної відкритої вкладки.',
+  filterVisitedSitesPlaceholder: 'Фільтр відвіданих сайтів за доменом…',
+  noMatchingSites: 'Немає відповідних сайтів.',
   recentHistory: 'Недавня історія',
   remove: 'Видалити',
 

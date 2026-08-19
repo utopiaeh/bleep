@@ -9,6 +9,7 @@ interface DangerConfirmButtonProps {
   onConfirm: () => void;
   disabled?: boolean;
   autoCancelMs?: number;
+  size?: 'normal' | 'compact';
 }
 
 export function DangerConfirmButton({
@@ -18,6 +19,7 @@ export function DangerConfirmButton({
   onConfirm,
   disabled,
   autoCancelMs = 4000,
+  size = 'normal',
 }: DangerConfirmButtonProps) {
   const t = useTranslation();
   const [armed, setArmed] = useState(false);
@@ -45,18 +47,20 @@ export function DangerConfirmButton({
     onConfirm();
   }
 
+  const armedPadding = size === 'compact' ? 'px-3 py-1.5 text-xs' : 'px-3 py-2 text-sm';
+
   if (armed) {
     return (
       <div className="flex gap-2">
         <button
           onClick={confirm}
-          className="flex-1 rounded-md cursor-pointer bg-red-600 hover:bg-red-500 text-white py-2 text-sm font-medium"
+          className={`flex-1 rounded-md cursor-pointer bg-red-600 hover:bg-red-500 text-white font-medium whitespace-nowrap ${armedPadding}`}
         >
           {confirmLabel}
         </button>
         <button
           onClick={cancel}
-          className="rounded-md cursor-pointer border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 px-3 py-2 text-sm"
+          className={`rounded-md cursor-pointer border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 whitespace-nowrap ${armedPadding}`}
         >
           {t('cancel')}
         </button>
@@ -70,6 +74,7 @@ export function DangerConfirmButton({
       onClick={arm}
       disabled={disabled}
       variant="secondary"
+      size={size}
       idleLabel={idleLabel}
     />
   );
