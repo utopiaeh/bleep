@@ -235,10 +235,7 @@ export function parseOriginMappings(raw: string): OriginMapping[] {
       const [sourcePart, targetsPart = ''] = line.split('=>');
       return {
         source: (sourcePart ?? '').trim(),
-        targets: targetsPart
-          .split(',')
-          .map(normalizeTargetOrigin)
-          .filter(Boolean),
+        targets: targetsPart.split(',').map(normalizeTargetOrigin).filter(Boolean),
       };
     })
     .filter((m) => m.source && m.targets.length > 0);
@@ -275,15 +272,6 @@ function waitForTabComplete(tabId: number, ms: number): Promise<void> {
   );
 }
 
-/** Clears an origin with no open tab of its own — e.g. an SSO/auth domain a site
- * silently talks to (see clearCookiesForOrigin's partition note: this is exactly the
- * shape of "session survives clearing the site itself" cases). Chrome can scope
- * browsingData.remove to it directly with no tab needed. On Firefox, cookies and
- * IndexedDB go through the same native calls used for the active tab (no tab
- * required for either); the remaining storage types have no such native path, so a
- * background tab is opened briefly to run the same content-script clear, then closed.
- * ponytail: that background tab flashes in the tab strip for a moment — acceptable
- * given this only runs on an explicit clear click. */
 export async function clearLinkedOrigin(
   origin: string,
   ids: DataTypeId[],
@@ -293,34 +281,38 @@ export async function clearLinkedOrigin(
   if (scoped.length === 0) return;
 
   if (import.meta.env.FIREFOX) {
+    const scriptIds = scoped.filter((id) => id !== 'cookies' && id !== 'indexedDB');
+    let scriptError: unknown;
+    if (scriptIds.length > 0) {
+      try {
+        const tab = await browser.tabs.create({
+          url: origin,
+          active: false,
+          ...(cookieStoreId ? { cookieStoreId } : {}),
+        } as Parameters<typeof browser.tabs.create>[0]);
+        try {
+          if (tab.id != null) {
+            await waitForTabComplete(tab.id, 10000).catch(() => {});
+            await withTimeout(runContentScriptClear(tab.id, scriptIds), 15000);
+          }
+        } finally {
+          if (tab.id != null) await browser.tabs.remove(tab.id).catch(() => {});
+        }
+      } catch (err) {
+        scriptError = err;
+      }
+    }
+
     const tasks: Promise<unknown>[] = [];
     if (scoped.includes('cookies')) {
-      tasks.push(clearCookiesForOrigin(origin, cookieStoreId));
+      tasks.push(withTimeout(clearCookiesForOrigin(origin, cookieStoreId), 15000));
     }
     if (scoped.includes('indexedDB')) {
-      tasks.push(clearIndexedDBForHostname(new URL(origin).hostname));
-    }
-    const scriptIds = scoped.filter((id) => id !== 'cookies' && id !== 'indexedDB');
-    if (scriptIds.length > 0) {
-      tasks.push(
-        (async () => {
-          const tab = await browser.tabs.create({
-            url: origin,
-            active: false,
-            ...(cookieStoreId ? { cookieStoreId } : {}),
-          } as Parameters<typeof browser.tabs.create>[0]);
-          try {
-            if (tab.id != null) {
-              await waitForTabComplete(tab.id, 10000).catch(() => {});
-              await withTimeout(runContentScriptClear(tab.id, scriptIds), 15000);
-            }
-          } finally {
-            if (tab.id != null) await browser.tabs.remove(tab.id).catch(() => {});
-          }
-        })(),
-      );
+      tasks.push(withTimeout(clearIndexedDBForHostname(new URL(origin).hostname), 15000));
     }
     await Promise.all(tasks);
+
+    if (scriptError) throw scriptError;
   } else {
     await clearSiteViaBrowsingData(origin, ids);
   }
@@ -347,6 +339,25 @@ export function tabDomain(tab: { url?: string }): string | null {
   } catch {
     return null;
   }
+}
+
+export interface VisitedSite {
+  hostname: string;
+  origin: string;
+}
+
+export function dedupeSitesByHostname(urls: Array<string | undefined>): VisitedSite[] {
+  const seen = new Map<string, string>();
+  for (const url of urls) {
+    if (!url) continue;
+    try {
+      const parsed = new URL(url);
+      if (!seen.has(parsed.hostname)) seen.set(parsed.hostname, parsed.origin);
+    } catch {
+      // not a parsable URL — skip
+    }
+  }
+  return Array.from(seen, ([hostname, origin]) => ({ hostname, origin }));
 }
 
 export async function clearTabData(

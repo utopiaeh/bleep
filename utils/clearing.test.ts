@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  dedupeSitesByHostname,
   isValidHost,
   linkedOriginsFor,
   parseOriginMappings,
@@ -115,6 +116,31 @@ describe('linkedOriginsFor', () => {
   it('flattens targets across multiple matching mappings', () => {
     const multi = 'domain.com => a.com\ndomain.com => b.com';
     expect(linkedOriginsFor(multi, 'https://domain.com')).toEqual(['https://a.com', 'https://b.com']);
+  });
+});
+
+describe('dedupeSitesByHostname', () => {
+  it('collapses multiple visits to the same host into one entry', () => {
+    const urls = ['https://domain.com/a', 'https://domain.com/b', 'https://other.com'];
+    expect(dedupeSitesByHostname(urls)).toEqual([
+      { hostname: 'domain.com', origin: 'https://domain.com' },
+      { hostname: 'other.com', origin: 'https://other.com' },
+    ]);
+  });
+
+  it('keeps the origin of the first (most recent) occurrence', () => {
+    const urls = ['http://domain.com/first', 'https://domain.com/second'];
+    expect(dedupeSitesByHostname(urls)).toEqual([{ hostname: 'domain.com', origin: 'http://domain.com' }]);
+  });
+
+  it('skips missing and unparsable urls', () => {
+    expect(dedupeSitesByHostname([undefined, 'not a url', 'https://domain.com'])).toEqual([
+      { hostname: 'domain.com', origin: 'https://domain.com' },
+    ]);
+  });
+
+  it('returns an empty list for no input', () => {
+    expect(dedupeSitesByHostname([])).toEqual([]);
   });
 });
 
