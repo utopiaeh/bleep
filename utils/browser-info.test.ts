@@ -18,10 +18,17 @@ describe('isGeckoBased', () => {
 });
 
 describe('getBrowserName', () => {
-  it('returns the self-reported name from getBrowserInfo', async () => {
+  it('returns the self-reported name from getBrowserInfo (e.g. a fork with no name override)', async () => {
     (browser.runtime as { getBrowserInfo?: () => Promise<{ name: string }> }).getBrowserInfo = async () => ({
-      name: 'Zen',
+      name: 'Firefox',
     });
+    expect(await getBrowserName()).toBe('Firefox');
+  });
+
+  it('overrides to "Zen" when the info object has Zen\'s own marker field, since Zen self-reports name: "Firefox"', async () => {
+    (
+      browser.runtime as { getBrowserInfo?: () => Promise<{ name: string; zen?: unknown }> }
+    ).getBrowserInfo = async () => ({ name: 'Firefox', zen: { version: '1.21.15b' } });
     expect(await getBrowserName()).toBe('Zen');
   });
 

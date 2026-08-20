@@ -97,7 +97,10 @@ const en = {
   protectedSitesPlaceholder: 'One hostname per line, e.g. app.your-company.com',
   protectedSitesHint:
     "Never cleared by any per-site action (tabs, visited sites, or as a mapped origin target) — a source also protects its subdomains. Doesn't apply to Global's \"Clear all sites\", which has no way to exclude specific sites.",
-  protectedSitesGlobalNote: "Protected sites list doesn't apply here — Global clear always clears everything.",
+  protectedSitesGlobalNoteChrome:
+    "Protected sites you've visited before are excluded here — but only ones already in your history; an unvisited protected site can't be excluded from Global clear.",
+  protectedSitesGlobalNoteFirefox:
+    "Protected sites list doesn't apply here — {browser} has no way to exclude specific sites, so Global clear always clears everything.",
 
   backupTitle: 'Backup',
   backupHint: 'Export your settings (including origin mappings) to a file, or import one on another machine.',
@@ -218,8 +221,10 @@ const ru: typeof en = {
   protectedSitesPlaceholder: 'По одному домену на строку, напр. app.your-company.com',
   protectedSitesHint:
     'Никогда не очищаются никакими действиями для сайта (вкладки, посещённые сайты или как связанный целевой домен) — источник также защищает свои поддомены. Не действует для «Очистить все сайты» в разделе «Глобально» — там нет способа исключить отдельные сайты.',
-  protectedSitesGlobalNote:
-    'Список защищённых сайтов здесь не действует — глобальная очистка всегда очищает всё.',
+  protectedSitesGlobalNoteChrome:
+    'Здесь исключаются защищённые сайты, которые вы уже посещали — но только те, что есть в истории; непосещённый защищённый сайт нельзя исключить из глобальной очистки.',
+  protectedSitesGlobalNoteFirefox:
+    'Список защищённых сайтов здесь не действует — в {browser} нет способа исключить отдельные сайты, поэтому глобальная очистка всегда очищает всё.',
 
   backupTitle: 'Резервная копия',
   backupHint: 'Экспортируйте настройки (включая сопоставления источников) в файл или импортируйте их на другом устройстве.',
@@ -340,8 +345,10 @@ const ro: typeof en = {
   protectedSitesPlaceholder: 'Câte un domeniu pe linie, ex. app.compania-ta.com',
   protectedSitesHint:
     'Nu sunt șterse niciodată de nicio acțiune per site (file, site-uri vizitate sau ca țintă de corespondență) — o sursă protejează și subdomeniile ei. Nu se aplică la „Șterge toate site-urile” din Global, care nu poate exclude anumite site-uri.',
-  protectedSitesGlobalNote:
-    'Lista de site-uri protejate nu se aplică aici — ștergerea globală șterge întotdeauna totul.',
+  protectedSitesGlobalNoteChrome:
+    'Site-urile protejate pe care le-ai vizitat deja sunt excluse aici — dar doar cele din istoric; un site protejat nevizitat nu poate fi exclus din ștergerea globală.',
+  protectedSitesGlobalNoteFirefox:
+    'Lista de site-uri protejate nu se aplică aici — {browser} nu poate exclude anumite site-uri, așa că ștergerea globală șterge întotdeauna totul.',
 
   backupTitle: 'Backup',
   backupHint: 'Exportă setările (inclusiv corespondențele de origini) într-un fișier sau importă-le pe alt dispozitiv.',
@@ -462,8 +469,10 @@ const uk: typeof en = {
   protectedSitesPlaceholder: 'По одному домену на рядок, напр. app.your-company.com',
   protectedSitesHint:
     'Ніколи не очищаються жодною дією для сайту (вкладки, відвідані сайти або як зіставлена ціль) — джерело також захищає свої піддомени. Не діє для «Очистити всі сайти» у Глобальному розділі — там немає способу виключити окремі сайти.',
-  protectedSitesGlobalNote:
-    'Список захищених сайтів тут не діє — глобальне очищення завжди очищає все.',
+  protectedSitesGlobalNoteChrome:
+    'Захищені сайти, які ви вже відвідували, виключаються тут — але лише ті, що є в історії; невідвіданий захищений сайт не можна виключити з глобального очищення.',
+  protectedSitesGlobalNoteFirefox:
+    'Список захищених сайтів тут не діє — у {browser} немає способу виключити окремі сайти, тому глобальне очищення завжди очищає все.',
 
   backupTitle: 'Резервна копія',
   backupHint: 'Експортуйте налаштування (включно зі зіставленнями джерел) у файл або імпортуйте їх на іншому пристрої.',

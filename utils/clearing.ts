@@ -15,11 +15,18 @@ export async function getSupportedKeys(): Promise<Set<string>> {
   return new Set(Object.keys(settings.dataToRemove));
 }
 
-export async function clearGlobal(ids: DataTypeId[]): Promise<void> {
+/** Chrome (since Chrome 74) supports excludeOrigins on an unscoped clear — Firefox
+ * has no equivalent (Bugzilla 1632796, still open), so exclusion there is a no-op:
+ * Global stays all-or-nothing on Firefox regardless of a protected-sites list. */
+export async function clearGlobal(ids: DataTypeId[], excludeOrigins: string[] = []): Promise<void> {
   const supported = await getSupportedKeys();
   const dataToRemove = toRemovalOptions(ids, supported);
   if (Object.keys(dataToRemove).length === 0) return;
-  await browser.browsingData.remove({ since: 0 }, dataToRemove);
+  const options: Record<string, unknown> = { since: 0 };
+  if (!import.meta.env.FIREFOX && excludeOrigins.length > 0) {
+    options.excludeOrigins = excludeOrigins;
+  }
+  await browser.browsingData.remove(options as Parameters<typeof browser.browsingData.remove>[0], dataToRemove);
 }
 
 export function siteScopedIds(ids: DataTypeId[]): DataTypeId[] {
@@ -166,23 +173,20 @@ export async function requestOriginPermission(): Promise<boolean> {
 
 /** document.cookie can't see HttpOnly cookies; the privileged cookies API can.
  * Firefox's Total Cookie Protection also partitions third-party cookies (e.g. an
- * SSO/silent-renew iframe from another domain) by top-level site — those live in a
- * separate jar getAll() won't return without an explicit partitionKey, so a plain
- * getAll() here would silently miss a still-alive session cookie set that way. */
+ * SSO/silent-renew iframe from another domain, partitioned under whatever OTHER
+ * top-level site embeds it) — a plain getAll() only sees the unpartitioned jar and
+ * would silently miss a still-alive session cookie set that way. Passing an empty
+ * partitionKey (per MDN) matches every partition regardless of its topLevelSite in
+ * one call — matching on `partitionKey: { topLevelSite: origin }` would only catch
+ * the origin partitioning itself, not the actual leak case this exists for. */
 async function clearCookiesForOrigin(origin: string, storeId?: string): Promise<void> {
-  const base = { url: origin, storeId } as Parameters<typeof browser.cookies.getAll>[0];
-  const partitioned = {
-    ...base,
-    partitionKey: { topLevelSite: origin },
-  } as Parameters<typeof browser.cookies.getAll>[0];
-
-  const [unpartitioned, fromPartition] = await Promise.all([
-    browser.cookies.getAll(base),
-    browser.cookies.getAll(partitioned).catch(() => []),
-  ]);
+  const options = { url: origin, storeId, partitionKey: {} } as Parameters<typeof browser.cookies.getAll>[0];
+  const cookies = await browser.cookies
+    .getAll(options)
+    .catch(() => browser.cookies.getAll({ url: origin, storeId } as Parameters<typeof browser.cookies.getAll>[0]));
 
   await Promise.all(
-    [...unpartitioned, ...fromPartition].map((cookie) =>
+    cookies.map((cookie) =>
       browser.cookies.remove({
         url: origin,
         name: cookie.name,

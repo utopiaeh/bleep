@@ -1,4 +1,5 @@
 import type { Browser } from 'wxt/browser';
+import { useBrowserName } from '../../hooks/useBrowserName';
 import { useTranslation } from '../../hooks/useTranslation';
 import { DATA_TYPES, type DataTypeId } from '../../utils/data-types';
 import { DangerConfirmButton } from '../DangerConfirmButton';
@@ -36,6 +37,7 @@ export function GlobalSection({
   hasProtectedSites,
 }: GlobalSectionProps) {
   const t = useTranslation();
+  const browserName = useBrowserName();
 
   return (
     <section className="mb-8">
@@ -53,7 +55,13 @@ export function GlobalSection({
           onConfirm={onClear}
         />
       </div>
-      {hasProtectedSites && <p className="text-xs text-stone-500 mt-2">{t('protectedSitesGlobalNote')}</p>}
+      {hasProtectedSites && (
+        <p className="text-xs text-stone-500 mt-2">
+          {browserName
+            ? t('protectedSitesGlobalNoteFirefox', { browser: browserName })
+            : t('protectedSitesGlobalNoteChrome')}
+        </p>
+      )}
 
       {showHistory && (
         <HistorySection

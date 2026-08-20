@@ -13,6 +13,7 @@ import {
   clearGlobal,
   clearLinkedOrigin,
   clearTabData,
+  dedupeSitesByHostname,
   filterProtectedTargets,
   isProtectedSite,
   linkedOriginsFor,
@@ -56,7 +57,16 @@ export default function App() {
   async function handleClear() {
     setStatus('clearing');
     try {
-      await clearGlobal(selectedTypesGlobal);
+      // Only fetch history (needed to resolve protected hostnames to real origins) if
+      // there's actually something to exclude — most popup opens won't need this.
+      let excludeOrigins: string[] = [];
+      if (protectedSites.trim()) {
+        const historyItems = await browser.history.search({ text: '', maxResults: 1000 });
+        excludeOrigins = dedupeSitesByHostname(historyItems.map((item) => item.url))
+          .filter((site) => isProtectedSite(protectedSites, site.hostname))
+          .map((site) => site.origin);
+      }
+      await clearGlobal(selectedTypesGlobal, excludeOrigins);
       recordClear('(global)', selectedTypesGlobal);
       setStatus('done');
     } catch (err) {
