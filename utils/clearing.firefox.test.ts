@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { browser } from 'wxt/browser';
-import { clearLinkedOrigin, clearTabData } from './clearing';
+import { clearGlobal, clearLinkedOrigin, clearTabData } from './clearing';
 
 beforeEach(() => {
   vi.stubEnv('FIREFOX', 'true');
@@ -164,5 +164,39 @@ describe('clearTabData (Firefox path)', () => {
     const ok = await clearTabData({ id: 42 }, ['cacheStorage']);
     expect(ok).toBe(false);
     expect(browser.scripting.executeScript).not.toHaveBeenCalled();
+  });
+});
+
+describe('clearGlobal (Firefox path)', () => {
+  it('ignores excludeOrigins — Firefox has no such option, so Global stays all-or-nothing', async () => {
+    (browser.browsingData.settings as ReturnType<typeof vi.fn>).mockResolvedValue({
+      dataToRemove: { cache: true },
+    });
+    await clearGlobal(['cache'], ['https://protected.com']);
+    expect(browser.browsingData.remove).toHaveBeenCalledWith({ since: 0 }, { cache: true });
+  });
+});
+
+describe('clearCookiesForOrigin (via clearTabData, Firefox path)', () => {
+  it('fetches every partition in one call using an empty partitionKey', async () => {
+    await clearTabData({ id: 42, url: 'https://domain.com' }, ['cookies']);
+    expect(browser.cookies.getAll).toHaveBeenCalledTimes(1);
+    expect(browser.cookies.getAll).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://domain.com', partitionKey: {} }),
+    );
+  });
+
+  it('falls back to an unpartitioned-only call if the partitioned getAll rejects', async () => {
+    (browser.cookies.getAll as ReturnType<typeof vi.fn>)
+      .mockRejectedValueOnce(new Error('partitionKey unsupported'))
+      .mockResolvedValueOnce([]);
+
+    const ok = await clearTabData({ id: 42, url: 'https://domain.com' }, ['cookies']);
+
+    expect(ok).toBe(true);
+    expect(browser.cookies.getAll).toHaveBeenCalledTimes(2);
+    expect(browser.cookies.getAll).toHaveBeenLastCalledWith(
+      expect.objectContaining({ url: 'https://domain.com' }),
+    );
   });
 });

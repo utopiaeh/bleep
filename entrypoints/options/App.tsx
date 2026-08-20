@@ -111,12 +111,17 @@ export default function App() {
     return history.filter((item) => (item.title ?? item.url ?? '').toLowerCase().includes(q));
   }, [history, historyFilter]);
 
+  const allVisitedSites = useMemo(
+    () => dedupeSitesByHostname(visitedHistory.map((item) => item.url)),
+    [visitedHistory],
+  );
+
   const visitedSites = useMemo(
     () =>
-      dedupeSitesByHostname(visitedHistory.map((item) => item.url)).filter(
+      allVisitedSites.filter(
         (site) => !clearedHostnames.has(site.hostname) && !isProtectedSite(protectedSites, site.hostname),
       ),
-    [visitedHistory, clearedHostnames, protectedSites],
+    [allVisitedSites, clearedHostnames, protectedSites],
   );
 
   const filteredVisitedSites = useMemo(() => {
@@ -128,7 +133,13 @@ export default function App() {
   async function handleGlobalClear() {
     setGlobalStatus('clearing');
     try {
-      await clearGlobal(selectedTypesGlobal);
+      // Only Chrome can exclude specific origins from an unscoped clear at all — this
+      // only excludes protected sites we actually know the real origin of (i.e. ones
+      // in your history); Firefox has no such option and clears everything regardless.
+      const excludeOrigins = allVisitedSites
+        .filter((site) => isProtectedSite(protectedSites, site.hostname))
+        .map((site) => site.origin);
+      await clearGlobal(selectedTypesGlobal, excludeOrigins);
       recordClear('(global)', selectedTypesGlobal);
       setGlobalStatus('done');
     } catch (err) {

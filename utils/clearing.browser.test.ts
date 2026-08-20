@@ -47,6 +47,19 @@ describe('clearGlobal', () => {
     await clearGlobal(['history', 'downloads']);
     expect(browser.browsingData.remove).not.toHaveBeenCalled();
   });
+
+  it('passes excludeOrigins through on Chrome', async () => {
+    await clearGlobal(['cache', 'cookies'], ['https://protected.com']);
+    expect(browser.browsingData.remove).toHaveBeenCalledWith(
+      { since: 0, excludeOrigins: ['https://protected.com'] },
+      { cache: true, cookies: true },
+    );
+  });
+
+  it('omits excludeOrigins entirely when the list is empty', async () => {
+    await clearGlobal(['cache', 'cookies'], []);
+    expect(browser.browsingData.remove).toHaveBeenCalledWith({ since: 0 }, { cache: true, cookies: true });
+  });
 });
 
 describe('clearSiteViaBrowsingData', () => {
