@@ -1,8 +1,10 @@
 import type { Browser } from 'wxt/browser';
 import { useTranslation } from '../../hooks/useTranslation';
-import { HistoryList } from '../HistoryList';
-import { type ClearStatus } from '../StatusButton';
 import { clearAllLabel } from '../../utils/clear-status';
+import { FilterRow } from '../FilterRow';
+import { HistoryList } from '../HistoryList';
+import { SectionHeading } from '../SectionHeading';
+import { type ClearStatus } from '../StatusButton';
 
 interface HistorySectionProps {
   items: Browser.history.HistoryItem[];
@@ -18,17 +20,8 @@ export function HistorySection({ items, filter, onFilterChange, status, onClearA
 
   return (
     <div className="mt-4">
-      <h3 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
-        {t('recentHistory')}
-      </h3>
-      <div className="flex gap-2 mb-2">
-        <input
-          type="text"
-          value={filter}
-          onChange={(e) => onFilterChange(e.target.value)}
-          placeholder={t('filterHistoryPlaceholder')}
-          className="flex-1 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
-        />
+      <SectionHeading as="h3" title={t('recentHistory')} />
+      <FilterRow value={filter} onChange={onFilterChange} placeholder={t('filterHistoryPlaceholder')}>
         <button
           onClick={onClearAll}
           disabled={status === 'clearing' || items.length === 0}
@@ -36,7 +29,7 @@ export function HistorySection({ items, filter, onFilterChange, status, onClearA
         >
           {clearAllLabel(t, status, items.length)}
         </button>
-      </div>
+      </FilterRow>
       <HistoryList items={items} onDelete={onDelete} />
     </div>
   );

@@ -2,6 +2,8 @@ import { useBrowserName } from '../../hooks/useBrowserName';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { VisitedSite } from '../../utils/clearing';
 import { DangerConfirmButton } from '../DangerConfirmButton';
+import { FilterRow } from '../FilterRow';
+import { SectionHeading } from '../SectionHeading';
 import { type ClearStatus } from '../StatusButton';
 import { VisitedSiteList } from '../VisitedSiteList';
 
@@ -31,24 +33,14 @@ export function VisitedSitesSection({
 
   return (
     <div className="mt-4">
-      <h3 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
-        {t('visitedSites')}
-      </h3>
-      <p className="text-xs text-stone-500 mb-2">{t('visitedSitesDescription')}</p>
+      <SectionHeading as="h3" title={t('visitedSites')} description={t('visitedSitesDescription')} />
       {browserName && (
         <p className="text-xs text-stone-500 mb-2">
           {t('visitedSitesContainerCaveat', { browser: browserName })}
         </p>
       )}
 
-      <div className="flex gap-2 mb-2">
-        <input
-          type="text"
-          value={filter}
-          onChange={(e) => onFilterChange(e.target.value)}
-          placeholder={t('filterVisitedSitesPlaceholder')}
-          className="flex-1 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
-        />
+      <FilterRow value={filter} onChange={onFilterChange} placeholder={t('filterVisitedSitesPlaceholder')}>
         <div className="shrink-0">
           <DangerConfirmButton
             status={status}
@@ -59,7 +51,7 @@ export function VisitedSitesSection({
             size="compact"
           />
         </div>
-      </div>
+      </FilterRow>
 
       <VisitedSiteList
         sites={sites}

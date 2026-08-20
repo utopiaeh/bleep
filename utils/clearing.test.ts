@@ -8,7 +8,7 @@ import {
   parseOriginMappings,
   siteScopedIds,
   tabCookieStoreId,
-  tabDomain,
+  tabHostname,
   tabOrigin,
 } from './clearing';
 
@@ -151,21 +151,21 @@ describe('dedupeSitesByHostname', () => {
   });
 });
 
-describe('tabOrigin / tabDomain / tabCookieStoreId', () => {
+describe('tabOrigin / tabHostname / tabCookieStoreId', () => {
   it('extracts origin and hostname from a tab url', () => {
     const tab = { url: 'https://sub.domain.com:8443/path?x=1' };
     expect(tabOrigin(tab)).toBe('https://sub.domain.com:8443');
-    expect(tabDomain(tab)).toBe('sub.domain.com');
+    expect(tabHostname(tab)).toBe('sub.domain.com');
   });
 
   it('returns null for a missing url', () => {
     expect(tabOrigin({})).toBeNull();
-    expect(tabDomain({})).toBeNull();
+    expect(tabHostname({})).toBeNull();
   });
 
   it('returns null for an unparsable url', () => {
     expect(tabOrigin({ url: 'not a url' })).toBeNull();
-    expect(tabDomain({ url: 'not a url' })).toBeNull();
+    expect(tabHostname({ url: 'not a url' })).toBeNull();
   });
 
   it('reads the Firefox-only cookieStoreId field when present', () => {

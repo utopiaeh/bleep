@@ -43,8 +43,6 @@ export default defineBackground(() => {
     if (info.status === 'complete') updateBadge(tabId, tab.url);
   });
 
-  // Editing the mapping list or toggling "Use origin mappings" should update the
-  // badge immediately, not just on the next tab switch/navigation.
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'sync' || !Object.keys(changes).some((key) => key.startsWith(SETTINGS_KEY))) return;
     browser.tabs.query({ active: true }).then((tabs) => {

@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { browser, type Browser } from 'wxt/browser';
+import { DataTypeGrid } from '../../components/DataTypeGrid';
 import { HelpPanel } from '../../components/HelpPanel';
+import { OriginMappingsEditor } from '../../components/OriginMappingsEditor';
 import { BackupSection } from '../../components/options/BackupSection';
 import { ClearLogSection } from '../../components/options/ClearLogSection';
 import { GlobalSection } from '../../components/options/GlobalSection';
 import { LanguageSection } from '../../components/options/LanguageSection';
-import { PerSiteSection } from '../../components/options/PerSiteSection';
+import { ProtectedSitesSection } from '../../components/options/ProtectedSitesSection';
 import { SettingsHeader, type OptionsTab } from '../../components/options/SettingsHeader';
+import { SiteTabsSection } from '../../components/options/SiteTabsSection';
 import { ThemeSection } from '../../components/options/ThemeSection';
+import { VisitedSitesSection } from '../../components/options/VisitedSitesSection';
+import { SectionHeading } from '../../components/SectionHeading';
 import { type ClearStatus } from '../../components/StatusButton';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
@@ -15,6 +20,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { recordClear } from '../../store/clearLog';
 import { useSettingsStore } from '../../store/settings';
 import { isGeckoBased } from '../../utils/browser-info';
+import { runClear } from '../../utils/clear-status';
 import {
   clearGlobal,
   clearLinkedOrigin,
@@ -27,12 +33,13 @@ import {
   requestOriginPermission,
   siteScopedIds,
   tabCookieStoreId,
-  tabDomain,
+  tabHostname,
   tabOrigin,
   type VisitedSite,
 } from '../../utils/clearing';
 import { mapWithConcurrency } from '../../utils/concurrency';
 import { siteScopedDataTypes } from '../../utils/data-types';
+import { withItem, withoutItem } from '../../utils/set-helpers';
 
 type Tab = Browser.tabs.Tab;
 
@@ -99,9 +106,9 @@ export default function App() {
   const filteredTabs = useMemo(() => {
     const q = siteFilter.trim().toLowerCase();
     return tabs.filter((tab) => {
-      const domain = tabDomain(tab) ?? '';
-      if (isProtectedSite(protectedSites, domain)) return false;
-      return !q || domain.toLowerCase().includes(q);
+      const hostname = tabHostname(tab) ?? '';
+      if (isProtectedSite(protectedSites, hostname)) return false;
+      return !q || hostname.toLowerCase().includes(q);
     });
   }, [tabs, siteFilter, protectedSites]);
 
@@ -131,37 +138,27 @@ export default function App() {
   }, [visitedSites, visitedSiteFilter]);
 
   async function handleGlobalClear() {
-    setGlobalStatus('clearing');
-    try {
-      // Only Chrome can exclude specific origins from an unscoped clear at all — this
-      // only excludes protected sites we actually know the real origin of (i.e. ones
-      // in your history); Firefox has no such option and clears everything regardless.
-      const excludeOrigins = allVisitedSites
-        .filter((site) => isProtectedSite(protectedSites, site.hostname))
-        .map((site) => site.origin);
+    // Only Chrome can exclude specific origins from an unscoped clear at all, and only
+    // for sites we actually know the real origin of (i.e. ones in your history).
+    const excludeOrigins = allVisitedSites
+      .filter((site) => isProtectedSite(protectedSites, site.hostname))
+      .map((site) => site.origin);
+    await runClear(setGlobalStatus, async () => {
       await clearGlobal(selectedTypesGlobal, excludeOrigins);
       recordClear('(global)', selectedTypesGlobal);
-      setGlobalStatus('done');
-    } catch (err) {
-      console.error('Bleep: global clear failed', err);
-      setGlobalStatus('failed');
-    }
-    setTimeout(() => setGlobalStatus('idle'), 1500);
+    });
   }
 
   async function handleSiteClear(tab: Tab) {
     if (tab.id == null || isReloading(tab.id)) return;
-    if (isProtectedSite(protectedSites, tabDomain(tab) ?? '')) return;
-    setBusyTabIds((s) => new Set(s).add(tab.id!));
-    setFailedTabIds((s) => {
-      const next = new Set(s);
-      next.delete(tab.id!);
-      return next;
-    });
+    if (isProtectedSite(protectedSites, tabHostname(tab) ?? '')) return;
+    const tabId = tab.id;
+    setBusyTabIds((s) => withItem(s, tabId));
+    setFailedTabIds((s) => withoutItem(s, tabId));
     try {
       const ids = siteScopedIds(selectedTypesSite);
       const ok = await clearTab(tab, ids);
-      if (!ok) setFailedTabIds((s) => new Set(s).add(tab.id!));
+      if (!ok) setFailedTabIds((s) => withItem(s, tabId));
       else {
         const origin = tabOrigin(tab);
         let linkedTargets: string[] = [];
@@ -171,21 +168,17 @@ export default function App() {
             linkedTargets.map((target) => clearLinkedOrigin(target, ids, tabCookieStoreId(tab))),
           );
         }
-        recordClear(tabDomain(tab) ?? origin ?? tab.url ?? '?', ids, linkedTargets);
+        recordClear(tabHostname(tab) ?? origin ?? tab.url ?? '?', ids, linkedTargets);
         if (autoReloadAfterClear) {
-          markReloading(tab.id);
-          browser.tabs.reload(tab.id, { bypassCache: true });
+          markReloading(tabId);
+          browser.tabs.reload(tabId, { bypassCache: true });
         }
       }
     } catch (err) {
       console.error('Bleep: site clear failed', err);
-      setFailedTabIds((s) => new Set(s).add(tab.id!));
+      setFailedTabIds((s) => withItem(s, tabId));
     }
-    setBusyTabIds((s) => {
-      const next = new Set(s);
-      next.delete(tab.id!);
-      return next;
-    });
+    setBusyTabIds((s) => withoutItem(s, tabId));
   }
 
   async function handleClearAllTabs() {
@@ -251,11 +244,9 @@ export default function App() {
 
   async function clearVisitedSite(site: VisitedSite): Promise<string[]> {
     const ids = siteScopedIds(selectedTypesSite);
-    // Firefox has no native per-site clear for cache/localStorage/sessionStorage, so
-    // clearLinkedOrigin falls back to a throwaway background tab for those. If the
-    // site is already open in a real tab, clear through that instead — no extra tab,
-    // and it picks up the tab's actual cookieStoreId (Firefox container) for free.
-    const openTab = (await browser.tabs.query({})).find((tab) => tabDomain(tab) === site.hostname);
+    // Prefer an already-open tab over clearLinkedOrigin's throwaway background tab —
+    // picks up the tab's real cookieStoreId (Firefox container) too.
+    const openTab = (await browser.tabs.query({})).find((tab) => tabHostname(tab) === site.hostname);
     const cookieStoreId = openTab ? tabCookieStoreId(openTab) : undefined;
 
     if (openTab?.id != null) {
@@ -274,27 +265,20 @@ export default function App() {
 
   async function handleClearVisitedSite(site: VisitedSite) {
     if (isProtectedSite(protectedSites, site.hostname)) return;
-    setBusyVisitedHostnames((s) => new Set(s).add(site.hostname));
-    setFailedVisitedHostnames((s) => {
-      const next = new Set(s);
-      next.delete(site.hostname);
-      return next;
-    });
+    const { hostname } = site;
+    setBusyVisitedHostnames((s) => withItem(s, hostname));
+    setFailedVisitedHostnames((s) => withoutItem(s, hostname));
     try {
       const granted = await requestOriginPermission();
       if (!granted) throw new Error('permission denied');
       const linkedTargets = await clearVisitedSite(site);
-      recordClear(site.hostname, siteScopedIds(selectedTypesSite), linkedTargets);
-      setClearedHostnames((s) => new Set(s).add(site.hostname));
+      recordClear(hostname, siteScopedIds(selectedTypesSite), linkedTargets);
+      setClearedHostnames((s) => withItem(s, hostname));
     } catch (err) {
       console.error('Bleep: visited site clear failed', err);
-      setFailedVisitedHostnames((s) => new Set(s).add(site.hostname));
+      setFailedVisitedHostnames((s) => withItem(s, hostname));
     }
-    setBusyVisitedHostnames((s) => {
-      const next = new Set(s);
-      next.delete(site.hostname);
-      return next;
-    });
+    setBusyVisitedHostnames((s) => withoutItem(s, hostname));
   }
 
   async function handleClearAllVisitedSites() {
@@ -410,36 +394,70 @@ export default function App() {
         )}
 
         {activeTab === 'perSite' && (
-          <PerSiteSection
-            types={SITE_TYPES}
-            selectedTypes={selectedTypesSite}
-            onToggleType={toggleTypeSite}
-            autoReloadAfterClear={autoReloadAfterClear}
-            onAutoReloadChange={setAutoReloadAfterClear}
-            useOriginMappings={useOriginMappings}
-            onUseOriginMappingsChange={setUseOriginMappings}
-            linkedOrigins={linkedOrigins}
-            onLinkedOriginsChange={setLinkedOrigins}
-            protectedSites={protectedSites}
-            onProtectedSitesChange={setProtectedSites}
-            siteFilter={siteFilter}
-            onSiteFilterChange={setSiteFilter}
-            bulkStatus={bulkStatus}
-            onClearAllTabs={handleClearAllTabs}
-            tabs={filteredTabs}
-            busyTabIds={busyTabIds}
-            failedTabIds={failedTabIds}
-            reloadingTabIds={reloadingTabIds}
-            onClearTab={handleSiteClear}
-            visitedSiteFilter={visitedSiteFilter}
-            onVisitedSiteFilterChange={setVisitedSiteFilter}
-            visitedSites={filteredVisitedSites}
-            visitedBulkStatus={visitedBulkStatus}
-            onClearAllVisitedSites={handleClearAllVisitedSites}
-            busyVisitedHostnames={busyVisitedHostnames}
-            failedVisitedHostnames={failedVisitedHostnames}
-            onClearVisitedSite={handleClearVisitedSite}
-          />
+          <section className="mb-8">
+            <SectionHeading title={t('scopePerSite')} description={t('scopePerSiteDescription')} />
+            <DataTypeGrid types={SITE_TYPES} selected={selectedTypesSite} onToggle={toggleTypeSite} className="mb-3" />
+
+            <hr className="border-stone-200 dark:border-stone-700 mb-3" />
+
+            <div className="flex flex-col gap-2 mb-3">
+              <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoReloadAfterClear}
+                  onChange={(e) => setAutoReloadAfterClear(e.target.checked)}
+                  className="accent-blue-500 cursor-pointer"
+                />
+                {t('reloadTabAfterClearingPerSite')}
+              </label>
+
+              <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useOriginMappings}
+                  onChange={(e) => setUseOriginMappings(e.target.checked)}
+                  className="accent-blue-500 cursor-pointer"
+                />
+                {t('useOriginMappings')}
+              </label>
+            </div>
+
+            <div className="mb-3 max-w-xl">
+              <OriginMappingsEditor value={linkedOrigins} onChange={setLinkedOrigins} />
+            </div>
+
+            <ProtectedSitesSection value={protectedSites} onChange={setProtectedSites} />
+
+            <hr className="border-stone-200 dark:border-stone-700 mb-3" />
+
+            {!isGeckoBased() && (
+              <>
+                <SiteTabsSection
+                  filter={siteFilter}
+                  onFilterChange={setSiteFilter}
+                  status={bulkStatus}
+                  onClearAll={handleClearAllTabs}
+                  tabs={filteredTabs}
+                  busyTabIds={busyTabIds}
+                  failedTabIds={failedTabIds}
+                  reloadingTabIds={reloadingTabIds}
+                  onClearTab={handleSiteClear}
+                />
+                <hr className="border-stone-200 dark:border-stone-700 mb-3 mt-3" />
+              </>
+            )}
+
+            <VisitedSitesSection
+              filter={visitedSiteFilter}
+              onFilterChange={setVisitedSiteFilter}
+              sites={filteredVisitedSites}
+              status={visitedBulkStatus}
+              onClearAll={handleClearAllVisitedSites}
+              busyHostnames={busyVisitedHostnames}
+              failedHostnames={failedVisitedHostnames}
+              onClearSite={handleClearVisitedSite}
+            />
+          </section>
         )}
 
         {activeTab === 'help' && <HelpPanel />}

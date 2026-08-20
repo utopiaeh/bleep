@@ -47,8 +47,6 @@ async function removeChunked(area: Browser.storage.StorageArea, name: string): P
   await area.remove([lenKey, ...Array.from({ length: len }, (_, i) => `${name}__${i}`)]);
 }
 
-/** Plain, unchunked local storage — used for state that's device-specific by nature
- * (e.g. the clear-activity log) and shouldn't consume the sync quota. */
 export const browserLocalStorage: StateStorage = {
   getItem: async (name) => {
     const result = await browser.storage.local.get(name);
