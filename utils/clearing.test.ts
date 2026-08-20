@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   dedupeSitesByHostname,
+  filterProtectedTargets,
+  isProtectedSite,
   isValidHost,
   linkedOriginsFor,
   parseOriginMappings,
@@ -139,6 +141,11 @@ describe('dedupeSitesByHostname', () => {
     ]);
   });
 
+  it('skips non-http(s) urls (chrome://, about:, file://)', () => {
+    const urls = ['chrome://extensions/', 'about:blank', 'file:///Users/me/index.html', 'https://domain.com'];
+    expect(dedupeSitesByHostname(urls)).toEqual([{ hostname: 'domain.com', origin: 'https://domain.com' }]);
+  });
+
   it('returns an empty list for no input', () => {
     expect(dedupeSitesByHostname([])).toEqual([]);
   });
@@ -164,5 +171,46 @@ describe('tabOrigin / tabDomain / tabCookieStoreId', () => {
   it('reads the Firefox-only cookieStoreId field when present', () => {
     expect(tabCookieStoreId({ cookieStoreId: 'firefox-container-1' })).toBe('firefox-container-1');
     expect(tabCookieStoreId({})).toBeUndefined();
+  });
+});
+
+describe('isProtectedSite', () => {
+  const list = 'app.your-company.com\nother.com';
+
+  it('matches an exact protected hostname', () => {
+    expect(isProtectedSite(list, 'app.your-company.com')).toBe(true);
+  });
+
+  it('matches a subdomain of a protected hostname', () => {
+    expect(isProtectedSite(list, 'sso.app.your-company.com')).toBe(true);
+  });
+
+  it('does not match an unrelated site', () => {
+    expect(isProtectedSite(list, 'unrelated.com')).toBe(false);
+  });
+
+  it('does not match a superstring host', () => {
+    expect(isProtectedSite(list, 'evilapp.your-company.com')).toBe(false);
+  });
+
+  it('treats an empty list as protecting nothing', () => {
+    expect(isProtectedSite('', 'anything.com')).toBe(false);
+  });
+});
+
+describe('filterProtectedTargets', () => {
+  it('drops targets whose hostname is protected', () => {
+    const targets = ['https://auth.domain.com', 'https://other.com'];
+    expect(filterProtectedTargets(targets, 'auth.domain.com')).toEqual(['https://other.com']);
+  });
+
+  it('keeps everything when the protected list is empty', () => {
+    const targets = ['https://auth.domain.com'];
+    expect(filterProtectedTargets(targets, '')).toEqual(targets);
+  });
+
+  it('keeps everything when nothing matches', () => {
+    const targets = ['https://a.com', 'https://b.com'];
+    expect(filterProtectedTargets(targets, 'unrelated.com')).toEqual(targets);
   });
 });

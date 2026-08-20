@@ -29,6 +29,7 @@ describe('simple setters', () => {
     s.setAutoReloadAfterClear(false);
     s.setLinkedOrigins('a.com => b.com');
     s.setUseOriginMappings(false);
+    s.setProtectedSites('protected.com');
     s.setTheme('dark');
     s.setLanguage('ru');
 
@@ -36,8 +37,23 @@ describe('simple setters', () => {
     expect(state.autoReloadAfterClear).toBe(false);
     expect(state.linkedOrigins).toBe('a.com => b.com');
     expect(state.useOriginMappings).toBe(false);
+    expect(state.protectedSites).toBe('protected.com');
     expect(state.theme).toBe('dark');
     expect(state.language).toBe('ru');
+  });
+});
+
+describe('importSettings', () => {
+  it('merges only the provided fields, leaving the rest untouched', () => {
+    const s = useSettingsStore.getState();
+    s.setAutoReloadAfterClear(false);
+
+    s.importSettings({ theme: 'dark', linkedOrigins: 'a.com => b.com' });
+
+    const state = useSettingsStore.getState();
+    expect(state.theme).toBe('dark');
+    expect(state.linkedOrigins).toBe('a.com => b.com');
+    expect(state.autoReloadAfterClear).toBe(false);
   });
 });
 

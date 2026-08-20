@@ -18,6 +18,7 @@ interface GlobalSectionProps {
   historyStatus: ClearStatus;
   onClearAllHistory: () => void;
   onDeleteHistoryItem: (url: string) => void;
+  hasProtectedSites: boolean;
 }
 
 export function GlobalSection({
@@ -32,6 +33,7 @@ export function GlobalSection({
   historyStatus,
   onClearAllHistory,
   onDeleteHistoryItem,
+  hasProtectedSites,
 }: GlobalSectionProps) {
   const t = useTranslation();
 
@@ -51,6 +53,7 @@ export function GlobalSection({
           onConfirm={onClear}
         />
       </div>
+      {hasProtectedSites && <p className="text-xs text-stone-500 mt-2">{t('protectedSitesGlobalNote')}</p>}
 
       {showHistory && (
         <HistorySection

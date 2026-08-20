@@ -36,6 +36,8 @@ const en = {
   clearActiveTabOnly: 'Clear active tab only',
   failedOrDenied: 'Failed / denied',
   activeTabHint: 'Only the site open in this tab is affected.',
+  protectedSiteLabel: 'Protected site',
+  protectedSiteHint: 'This site is on your protected list (Settings → Per Site) and can\'t be cleared from here.',
   clearAllSites: 'Clear all sites',
   yesClearEverything: 'Yes, clear everything',
   yesClearAllVisited: 'Yes, clear these',
@@ -83,11 +85,32 @@ const en = {
   noMatchingHistory: 'No history yet.',
   visitedSites: 'Visited sites',
   visitedSitesDescription:
-    "Any site from your history, not just open tabs — cleared the same way as the checklist above. On Firefox, this only clears the default container; a site open in a named container (e.g. Multi-Account Containers) needs clearing from its own open tab instead.",
+    'Any site from your history, not just open tabs — cleared the same way as the checklist above.',
+  visitedSitesContainerCaveat:
+    'On {browser}, this only clears the default container; a site open in a named container (e.g. Multi-Account Containers) needs clearing from its own open tab instead.',
   filterVisitedSitesPlaceholder: 'Filter visited sites by domain…',
   noMatchingSites: 'No matching sites.',
   recentHistory: 'Recent history',
   remove: 'Remove',
+
+  protectedSites: 'Protected sites',
+  protectedSitesPlaceholder: 'One hostname per line, e.g. app.your-company.com',
+  protectedSitesHint:
+    "Never cleared by any per-site action (tabs, visited sites, or as a mapped origin target) — a source also protects its subdomains. Doesn't apply to Global's \"Clear all sites\", which has no way to exclude specific sites.",
+  protectedSitesGlobalNote: "Protected sites list doesn't apply here — Global clear always clears everything.",
+
+  backupTitle: 'Backup',
+  backupHint: 'Export your settings (including origin mappings) to a file, or import one on another machine.',
+  exportSettings: 'Export settings',
+  importSettings: 'Import settings',
+  importInvalidFile: "That file couldn't be read as Bleep settings.",
+
+  clearLogTitle: 'Recently cleared',
+  clearLogEmpty: 'Nothing cleared yet.',
+  clearLogClear: 'Clear log',
+  clearLogLinkedCount: '{count} linked',
+  clearLogBulkTabs: '{count} tabs (bulk)',
+  clearLogBulkVisited: '{count} visited sites (bulk)',
 
   helpTitle: 'How Bleep works',
   helpPopupTitle: 'Popup',
@@ -134,6 +157,8 @@ const ru: typeof en = {
   failedOrDenied: 'Ошибка / отказано',
   activeTabHint:
     'Затрагивает только сайт, открытый в этой вкладке. При первом использовании запросит разрешение.',
+  protectedSiteLabel: 'Защищённый сайт',
+  protectedSiteHint: 'Этот сайт в списке защищённых (Настройки → Для сайта) и не может быть очищен отсюда.',
   clearAllSites: 'Очистить все сайты',
   yesClearEverything: 'Да, очистить всё',
   yesClearAllVisited: 'Да, очистить эти',
@@ -181,11 +206,33 @@ const ru: typeof en = {
   noMatchingHistory: 'История пуста.',
   visitedSites: 'Посещённые сайты',
   visitedSitesDescription:
-    'Любой сайт из истории, а не только открытые вкладки — очищается так же, как и по чек-листу выше. В Firefox это очищает только контейнер по умолчанию; сайт, открытый в именованном контейнере (например, Multi-Account Containers), нужно очищать из его собственной открытой вкладки.',
+    'Любой сайт из истории, а не только открытые вкладки — очищается так же, как и по чек-листу выше.',
+  visitedSitesContainerCaveat:
+    'В {browser} это очищает только контейнер по умолчанию; сайт, открытый в именованном контейнере (например, Multi-Account Containers), нужно очищать из его собственной открытой вкладки.',
   filterVisitedSitesPlaceholder: 'Фильтр посещённых сайтов по домену…',
   noMatchingSites: 'Нет подходящих сайтов.',
   recentHistory: 'Недавняя история',
   remove: 'Удалить',
+
+  protectedSites: 'Защищённые сайты',
+  protectedSitesPlaceholder: 'По одному домену на строку, напр. app.your-company.com',
+  protectedSitesHint:
+    'Никогда не очищаются никакими действиями для сайта (вкладки, посещённые сайты или как связанный целевой домен) — источник также защищает свои поддомены. Не действует для «Очистить все сайты» в разделе «Глобально» — там нет способа исключить отдельные сайты.',
+  protectedSitesGlobalNote:
+    'Список защищённых сайтов здесь не действует — глобальная очистка всегда очищает всё.',
+
+  backupTitle: 'Резервная копия',
+  backupHint: 'Экспортируйте настройки (включая сопоставления источников) в файл или импортируйте их на другом устройстве.',
+  exportSettings: 'Экспортировать настройки',
+  importSettings: 'Импортировать настройки',
+  importInvalidFile: 'Не удалось прочитать этот файл как настройки Bleep.',
+
+  clearLogTitle: 'Недавно очищено',
+  clearLogEmpty: 'Пока ничего не очищено.',
+  clearLogClear: 'Очистить журнал',
+  clearLogLinkedCount: 'связанных: {count}',
+  clearLogBulkTabs: '{count} вкладок (массово)',
+  clearLogBulkVisited: '{count} посещённых сайтов (массово)',
 
   helpTitle: 'Как работает Bleep',
   helpPopupTitle: 'Всплывающее окно',
@@ -232,6 +279,8 @@ const ro: typeof en = {
   failedOrDenied: 'Eroare / refuzat',
   activeTabHint:
     'Afectează doar site-ul deschis în această filă. Va cere permisiune o singură dată la prima utilizare.',
+  protectedSiteLabel: 'Site protejat',
+  protectedSiteHint: 'Acest site e în lista de site-uri protejate (Setări → Per site) și nu poate fi șters de aici.',
   clearAllSites: 'Șterge toate site-urile',
   yesClearEverything: 'Da, șterge totul',
   yesClearAllVisited: 'Da, șterge acestea',
@@ -279,11 +328,33 @@ const ro: typeof en = {
   noMatchingHistory: 'Niciun istoric încă.',
   visitedSites: 'Site-uri vizitate',
   visitedSitesDescription:
-    'Orice site din istoric, nu doar filele deschise — șters la fel ca lista de mai sus. Pe Firefox, se șterge doar containerul implicit; un site deschis într-un container numit (ex. Multi-Account Containers) trebuie șters din propria filă deschisă.',
+    'Orice site din istoric, nu doar filele deschise — șters la fel ca lista de mai sus.',
+  visitedSitesContainerCaveat:
+    'Pe {browser}, se șterge doar containerul implicit; un site deschis într-un container numit (ex. Multi-Account Containers) trebuie șters din propria filă deschisă.',
   filterVisitedSitesPlaceholder: 'Filtrează site-urile vizitate după domeniu…',
   noMatchingSites: 'Niciun site corespunzător.',
   recentHistory: 'Istoric recent',
   remove: 'Elimină',
+
+  protectedSites: 'Site-uri protejate',
+  protectedSitesPlaceholder: 'Câte un domeniu pe linie, ex. app.compania-ta.com',
+  protectedSitesHint:
+    'Nu sunt șterse niciodată de nicio acțiune per site (file, site-uri vizitate sau ca țintă de corespondență) — o sursă protejează și subdomeniile ei. Nu se aplică la „Șterge toate site-urile” din Global, care nu poate exclude anumite site-uri.',
+  protectedSitesGlobalNote:
+    'Lista de site-uri protejate nu se aplică aici — ștergerea globală șterge întotdeauna totul.',
+
+  backupTitle: 'Backup',
+  backupHint: 'Exportă setările (inclusiv corespondențele de origini) într-un fișier sau importă-le pe alt dispozitiv.',
+  exportSettings: 'Exportă setările',
+  importSettings: 'Importă setările',
+  importInvalidFile: 'Acest fișier nu a putut fi citit ca setări Bleep.',
+
+  clearLogTitle: 'Șters recent',
+  clearLogEmpty: 'Nimic șters încă.',
+  clearLogClear: 'Șterge jurnalul',
+  clearLogLinkedCount: '{count} corespondențe',
+  clearLogBulkTabs: '{count} file (în masă)',
+  clearLogBulkVisited: '{count} site-uri vizitate (în masă)',
 
   helpTitle: 'Cum funcționează Bleep',
   helpPopupTitle: 'Fereastra popup',
@@ -330,6 +401,8 @@ const uk: typeof en = {
   failedOrDenied: 'Помилка / відмовлено',
   activeTabHint:
     'Стосується лише сайту, відкритого в цій вкладці. При першому використанні запитає дозвіл.',
+  protectedSiteLabel: 'Захищений сайт',
+  protectedSiteHint: 'Цей сайт у списку захищених (Налаштування → Для сайту) і не може бути очищений звідси.',
   clearAllSites: 'Очистити всі сайти',
   yesClearEverything: 'Так, очистити все',
   yesClearAllVisited: 'Так, очистити ці',
@@ -377,11 +450,33 @@ const uk: typeof en = {
   noMatchingHistory: 'Історія порожня.',
   visitedSites: 'Відвідані сайти',
   visitedSitesDescription:
-    'Будь-який сайт з історії, а не лише відкриті вкладки — очищається так само, як за чек-листом вище. У Firefox це очищає лише контейнер за замовчуванням; сайт, відкритий у іменованому контейнері (напр. Multi-Account Containers), потрібно очищати з його власної відкритої вкладки.',
+    'Будь-який сайт з історії, а не лише відкриті вкладки — очищається так само, як за чек-листом вище.',
+  visitedSitesContainerCaveat:
+    'У {browser} це очищає лише контейнер за замовчуванням; сайт, відкритий у іменованому контейнері (напр. Multi-Account Containers), потрібно очищати з його власної відкритої вкладки.',
   filterVisitedSitesPlaceholder: 'Фільтр відвіданих сайтів за доменом…',
   noMatchingSites: 'Немає відповідних сайтів.',
   recentHistory: 'Недавня історія',
   remove: 'Видалити',
+
+  protectedSites: 'Захищені сайти',
+  protectedSitesPlaceholder: 'По одному домену на рядок, напр. app.your-company.com',
+  protectedSitesHint:
+    'Ніколи не очищаються жодною дією для сайту (вкладки, відвідані сайти або як зіставлена ціль) — джерело також захищає свої піддомени. Не діє для «Очистити всі сайти» у Глобальному розділі — там немає способу виключити окремі сайти.',
+  protectedSitesGlobalNote:
+    'Список захищених сайтів тут не діє — глобальне очищення завжди очищає все.',
+
+  backupTitle: 'Резервна копія',
+  backupHint: 'Експортуйте налаштування (включно зі зіставленнями джерел) у файл або імпортуйте їх на іншому пристрої.',
+  exportSettings: 'Експортувати налаштування',
+  importSettings: 'Імпортувати налаштування',
+  importInvalidFile: 'Не вдалося прочитати цей файл як налаштування Bleep.',
+
+  clearLogTitle: 'Нещодавно очищено',
+  clearLogEmpty: 'Поки нічого не очищено.',
+  clearLogClear: 'Очистити журнал',
+  clearLogLinkedCount: 'пов’язаних: {count}',
+  clearLogBulkTabs: '{count} вкладок (масово)',
+  clearLogBulkVisited: '{count} відвіданих сайтів (масово)',
 
   helpTitle: 'Як працює Bleep',
   helpPopupTitle: 'Спливаюче вікно',
