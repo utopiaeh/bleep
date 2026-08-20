@@ -290,18 +290,21 @@ export function filterProtectedTargets(targets: string[], protectedRaw: string):
 }
 
 function waitForTabComplete(tabId: number, ms: number): Promise<void> {
-  return withTimeout(
-    new Promise<void>((resolve) => {
-      function onUpdated(id: number, info: { status?: string }) {
-        if (id === tabId && info.status === 'complete') {
-          browser.tabs.onUpdated.removeListener(onUpdated);
-          resolve();
-        }
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      browser.tabs.onUpdated.removeListener(onUpdated);
+      reject(new Error(`Timed out after ${ms}ms`));
+    }, ms);
+
+    function onUpdated(id: number, info: { status?: string }) {
+      if (id === tabId && info.status === 'complete') {
+        clearTimeout(timer);
+        browser.tabs.onUpdated.removeListener(onUpdated);
+        resolve();
       }
-      browser.tabs.onUpdated.addListener(onUpdated);
-    }),
-    ms,
-  );
+    }
+    browser.tabs.onUpdated.addListener(onUpdated);
+  });
 }
 
 export async function clearLinkedOrigin(

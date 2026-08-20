@@ -136,6 +136,25 @@ describe('clearLinkedOrigin (Firefox path)', () => {
     expect(browser.cookies.getAll).not.toHaveBeenCalled();
     expect(browser.browsingData.remove).not.toHaveBeenCalled();
   });
+
+  it('removes the tabs.onUpdated listener even when the tab never reaches "complete" (no leak on timeout)', async () => {
+    vi.useFakeTimers();
+    // Override the default mock: never fire the "complete" event for this tab.
+    (browser.tabs.create as ReturnType<typeof vi.fn>).mockImplementation(async (props: { url: string }) => ({
+      id: nextTabId++,
+      url: props.url,
+    }));
+
+    const promise = clearLinkedOrigin('https://auth.domain.com', ['cacheStorage']);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onUpdatedListeners.length).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(10000);
+    await promise;
+
+    expect(onUpdatedListeners.length).toBe(0);
+    vi.useRealTimers();
+  });
 });
 
 describe('clearTabData (Firefox path)', () => {

@@ -10,12 +10,19 @@ interface PersistedShape {
   state?: { linkedOrigins?: string; useOriginMappings?: boolean };
 }
 
-async function readMappingSettings(): Promise<{ linkedOrigins: string; useOriginMappings: boolean }> {
-  const raw = (await readPersistedSettingsRaw(SETTINGS_KEY)) as PersistedShape | null;
-  return {
-    linkedOrigins: raw?.state?.linkedOrigins ?? '',
-    useOriginMappings: raw?.state?.useOriginMappings ?? false,
-  };
+type MappingSettings = { linkedOrigins: string; useOriginMappings: boolean };
+
+let cachedSettings: MappingSettings | null = null;
+
+async function getMappingSettings(): Promise<MappingSettings> {
+  if (!cachedSettings) {
+    const raw = (await readPersistedSettingsRaw(SETTINGS_KEY)) as PersistedShape | null;
+    cachedSettings = {
+      linkedOrigins: raw?.state?.linkedOrigins ?? '',
+      useOriginMappings: raw?.state?.useOriginMappings ?? false,
+    };
+  }
+  return cachedSettings;
 }
 
 async function updateBadge(tabId: number, url: string | undefined) {
@@ -25,7 +32,7 @@ async function updateBadge(tabId: number, url: string | undefined) {
     return;
   }
 
-  const { linkedOrigins, useOriginMappings } = await readMappingSettings();
+  const { linkedOrigins, useOriginMappings } = await getMappingSettings();
   const hasMapping = useOriginMappings && linkedOriginsFor(linkedOrigins, origin).length > 0;
 
   await browser.action.setBadgeText({ tabId, text: hasMapping ? '●' : '' });
@@ -44,7 +51,9 @@ export default defineBackground(() => {
   });
 
   browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== 'sync' || !Object.keys(changes).some((key) => key.startsWith(SETTINGS_KEY))) return;
+    if (areaName !== 'sync' || !Object.keys(changes).some((key) => key.startsWith(SETTINGS_KEY)))
+      return;
+    cachedSettings = null;
     browser.tabs.query({ active: true }).then((tabs) => {
       for (const tab of tabs) {
         if (tab.id != null) updateBadge(tab.id, tab.url);
