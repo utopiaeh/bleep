@@ -7,15 +7,19 @@ import { StatusButton, type ClearStatus } from '../../components/StatusButton';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
+import { recordClear } from '../../store/clearLog';
 import { useSettingsStore } from '../../store/settings';
 import {
   clearGlobal,
   clearLinkedOrigin,
   clearTabData,
+  filterProtectedTargets,
+  isProtectedSite,
   linkedOriginsFor,
   requestOriginPermission,
   siteScopedIds,
   tabCookieStoreId,
+  tabDomain,
   tabOrigin,
 } from '../../utils/clearing';
 import { siteScopedDataTypes } from '../../utils/data-types';
@@ -33,21 +37,27 @@ export default function App() {
   const linkedOrigins = useSettingsStore((s) => s.linkedOrigins);
   const useOriginMappings = useSettingsStore((s) => s.useOriginMappings);
   const setUseOriginMappings = useSettingsStore((s) => s.setUseOriginMappings);
+  const protectedSites = useSettingsStore((s) => s.protectedSites);
   const [status, setStatus] = useState<ClearStatus>('idle');
   const [tabStatus, setTabStatus] = useState<ClearStatus>('idle');
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
+  const [activeTabDomain, setActiveTabDomain] = useState<string | null>(null);
   const { markReloading, isReloading } = useReloadGuard();
 
   useEffect(() => {
     browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
       setActiveTabId(tab?.id ?? null);
+      setActiveTabDomain(tab ? tabDomain(tab) : null);
     });
   }, []);
+
+  const isActiveTabProtected = activeTabDomain != null && isProtectedSite(protectedSites, activeTabDomain);
 
   async function handleClear() {
     setStatus('clearing');
     try {
       await clearGlobal(selectedTypesGlobal);
+      recordClear('(global)', selectedTypesGlobal);
       setStatus('done');
     } catch (err) {
       console.error('Bleep: global clear failed', err);
@@ -57,6 +67,7 @@ export default function App() {
   }
 
   async function handleClearActiveTab() {
+    if (isActiveTabProtected) return;
     setTabStatus('clearing');
     try {
       const granted = await requestOriginPermission();
@@ -66,16 +77,19 @@ export default function App() {
       } else {
         const ids = siteScopedIds(selectedTypesSite);
         const ok = granted && activeTab ? await clearTabData(activeTab, ids) : false;
-        if (ok && activeTab && useOriginMappings) {
-          const origin = tabOrigin(activeTab);
-          const cookieStoreId = tabCookieStoreId(activeTab);
-          if (origin) {
-            await Promise.all(
-              linkedOriginsFor(linkedOrigins, origin).map((target) =>
-                clearLinkedOrigin(target, ids, cookieStoreId),
-              ),
-            );
+        if (ok && activeTab) {
+          let linkedTargets: string[] = [];
+          if (useOriginMappings) {
+            const origin = tabOrigin(activeTab);
+            const cookieStoreId = tabCookieStoreId(activeTab);
+            if (origin) {
+              linkedTargets = filterProtectedTargets(linkedOriginsFor(linkedOrigins, origin), protectedSites);
+              await Promise.all(
+                linkedTargets.map((target) => clearLinkedOrigin(target, ids, cookieStoreId)),
+              );
+            }
           }
+          recordClear(tabDomain(activeTab) ?? activeTab.url ?? '?', ids, linkedTargets);
         }
         setTabStatus(ok ? 'done' : 'failed');
         if (ok && autoReloadAfterClear && activeTab?.id != null) {
@@ -118,12 +132,14 @@ export default function App() {
       <StatusButton
         status={isReloading(activeTabId) ? 'clearing' : tabStatus}
         onClick={handleClearActiveTab}
-        disabled={isReloading(activeTabId)}
-        idleLabel={t('clearActiveTabOnly')}
+        disabled={isReloading(activeTabId) || isActiveTabProtected}
+        idleLabel={isActiveTabProtected ? t('protectedSiteLabel') : t('clearActiveTabOnly')}
         clearingLabel={isReloading(activeTabId) ? t('reloading') : t('clearing')}
         failedLabel={t('failedOrDenied')}
       />
-      <p className="text-xs text-stone-500 mt-1">{t('activeTabHint')}</p>
+      <p className="text-xs text-stone-500 mt-1">
+        {isActiveTabProtected ? t('protectedSiteHint') : t('activeTabHint')}
+      </p>
 
       <div className="mt-3">
         <DangerConfirmButton

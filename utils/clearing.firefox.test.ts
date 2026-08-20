@@ -65,8 +65,10 @@ beforeEach(() => {
 });
 
 describe('clearLinkedOrigin (Firefox path)', () => {
-  it('clears cookies and IndexedDB natively, and cache via a background tab', async () => {
-    await clearLinkedOrigin('https://auth.domain.com', ['cache', 'cookies', 'indexedDB']);
+  const NATIVE_IDS = ['cookies', 'indexedDB', 'localStorage', 'serviceWorkers'] as const;
+
+  it('clears cookies/indexedDB/localStorage/serviceWorkers natively, and cacheStorage via a background tab', async () => {
+    await clearLinkedOrigin('https://auth.domain.com', ['cacheStorage', ...NATIVE_IDS]);
 
     expect(browser.tabs.create).toHaveBeenCalledWith(
       expect.objectContaining({ url: 'https://auth.domain.com', active: false }),
@@ -78,43 +80,49 @@ describe('clearLinkedOrigin (Firefox path)', () => {
     expect(browser.cookies.getAll).toHaveBeenCalled();
     expect(browser.browsingData.remove).toHaveBeenCalledWith(
       { hostnames: ['auth.domain.com'] },
-      { indexedDB: true },
+      { indexedDB: true, localStorage: true, serviceWorkers: true },
     );
   });
 
-  it('closes the background tab before clearing cookies/IndexedDB, so a page reload cannot repopulate them after the wipe', async () => {
-    await clearLinkedOrigin('https://auth.domain.com', ['cache', 'cookies', 'indexedDB']);
+  it('never needs a tab for HTTP Cache — Firefox has no per-site API for it at all', async () => {
+    await clearLinkedOrigin('https://auth.domain.com', ['cache', 'cookies']);
+    expect(browser.tabs.create).not.toHaveBeenCalled();
+  });
+
+  it('closes the background tab before clearing cookies/indexedDB/localStorage/serviceWorkers, so a page reload cannot repopulate them after the wipe', async () => {
+    await clearLinkedOrigin('https://auth.domain.com', ['cacheStorage', ...NATIVE_IDS]);
 
     const tabRemoveIndex = calls.indexOf('tabs.remove');
     const cookiesIndex = calls.indexOf('cookies.getAll');
-    const indexedDbIndex = calls.indexOf('browsingData.remove');
+    const nativeIndex = calls.indexOf('browsingData.remove');
 
     expect(tabRemoveIndex).toBeGreaterThanOrEqual(0);
     expect(tabRemoveIndex).toBeLessThan(cookiesIndex);
-    expect(tabRemoveIndex).toBeLessThan(indexedDbIndex);
+    expect(tabRemoveIndex).toBeLessThan(nativeIndex);
   });
 
   it('passes the cookieStoreId (Firefox container) through to the background tab', async () => {
-    await clearLinkedOrigin('https://auth.domain.com', ['cache'], 'firefox-container-1');
+    await clearLinkedOrigin('https://auth.domain.com', ['cacheStorage'], 'firefox-container-1');
     expect(browser.tabs.create).toHaveBeenCalledWith(
       expect.objectContaining({ cookieStoreId: 'firefox-container-1' }),
     );
   });
 
-  it('skips opening a tab entirely when only cookies/IndexedDB are requested', async () => {
-    await clearLinkedOrigin('https://auth.domain.com', ['cookies', 'indexedDB']);
+  it('skips opening a tab entirely when only natively-scopeable types are requested', async () => {
+    await clearLinkedOrigin('https://auth.domain.com', [...NATIVE_IDS]);
     expect(browser.tabs.create).not.toHaveBeenCalled();
     expect(browser.cookies.getAll).toHaveBeenCalled();
-    expect(browser.browsingData.remove).toHaveBeenCalled();
+    expect(browser.browsingData.remove).toHaveBeenCalledWith(
+      { hostnames: ['auth.domain.com'] },
+      { indexedDB: true, localStorage: true, serviceWorkers: true },
+    );
   });
 
-  it('still clears cookies/IndexedDB even if the background-tab step fails, then rethrows', async () => {
-    (browser.scripting.executeScript as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('boom'),
-    );
+  it('still clears cookies/indexedDB even if the background-tab step fails, then rethrows', async () => {
+    (browser.scripting.executeScript as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('boom'));
 
     await expect(
-      clearLinkedOrigin('https://auth.domain.com', ['cache', 'cookies', 'indexedDB']),
+      clearLinkedOrigin('https://auth.domain.com', ['cacheStorage', ...NATIVE_IDS]),
     ).rejects.toThrow('boom');
 
     expect(browser.tabs.remove).toHaveBeenCalled();
@@ -133,9 +141,11 @@ describe('clearLinkedOrigin (Firefox path)', () => {
 describe('clearTabData (Firefox path)', () => {
   it('clears an already-open tab via the content script, no navigation needed', async () => {
     const ok = await clearTabData({ id: 42, url: 'https://domain.com' }, [
-      'cache',
+      'cacheStorage',
       'cookies',
       'indexedDB',
+      'localStorage',
+      'serviceWorkers',
     ]);
 
     expect(ok).toBe(true);
@@ -146,12 +156,12 @@ describe('clearTabData (Firefox path)', () => {
     expect(browser.cookies.getAll).toHaveBeenCalled();
     expect(browser.browsingData.remove).toHaveBeenCalledWith(
       { hostnames: ['domain.com'] },
-      { indexedDB: true },
+      { indexedDB: true, localStorage: true, serviceWorkers: true },
     );
   });
 
   it('returns false without touching any browser API when the tab has no url', async () => {
-    const ok = await clearTabData({ id: 42 }, ['cache']);
+    const ok = await clearTabData({ id: 42 }, ['cacheStorage']);
     expect(ok).toBe(false);
     expect(browser.scripting.executeScript).not.toHaveBeenCalled();
   });

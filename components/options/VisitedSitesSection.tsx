@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { getBrowserName, isGeckoBased } from '../../utils/browser-info';
 import type { VisitedSite } from '../../utils/clearing';
 import { DangerConfirmButton } from '../DangerConfirmButton';
 import { type ClearStatus } from '../StatusButton';
@@ -26,6 +28,11 @@ export function VisitedSitesSection({
   onClearSite,
 }: VisitedSitesSectionProps) {
   const t = useTranslation();
+  const [browserName, setBrowserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isGeckoBased()) getBrowserName().then(setBrowserName);
+  }, []);
 
   return (
     <div className="mt-4">
@@ -33,6 +40,11 @@ export function VisitedSitesSection({
         {t('visitedSites')}
       </h3>
       <p className="text-xs text-stone-500 mb-2">{t('visitedSitesDescription')}</p>
+      {browserName && (
+        <p className="text-xs text-stone-500 mb-2">
+          {t('visitedSitesContainerCaveat', { browser: browserName })}
+        </p>
+      )}
 
       <div className="flex gap-2 mb-2">
         <input

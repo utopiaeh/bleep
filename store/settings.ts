@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { DataTypeId } from '../utils/data-types';
 import type { Language } from '../utils/i18n';
-import { browserLocalStorage } from '../utils/storage-adapter';
+import { browserSyncStorage } from '../utils/storage-adapter';
 
 export type Theme = 'system' | 'light' | 'dark';
 
@@ -20,6 +20,7 @@ export const DEFAULTS = {
   autoReloadAfterClear: true,
   linkedOrigins: '',
   useOriginMappings: true,
+  protectedSites: '',
   theme: 'system' as Theme,
   language: 'auto' as Language,
 };
@@ -30,6 +31,7 @@ interface SettingsState {
   autoReloadAfterClear: boolean;
   linkedOrigins: string;
   useOriginMappings: boolean;
+  protectedSites: string;
   theme: Theme;
   language: Language;
   toggleTypeGlobal: (id: DataTypeId) => void;
@@ -37,9 +39,11 @@ interface SettingsState {
   setAutoReloadAfterClear: (value: boolean) => void;
   setLinkedOrigins: (value: string) => void;
   setUseOriginMappings: (value: boolean) => void;
+  setProtectedSites: (value: string) => void;
   setTheme: (theme: Theme) => void;
   setLanguage: (language: Language) => void;
   resetSettings: () => void;
+  importSettings: (data: Partial<typeof DEFAULTS>) => void;
 }
 
 function toggleIn(
@@ -61,13 +65,15 @@ export const useSettingsStore = create<SettingsState>()(
       setAutoReloadAfterClear: (value) => set({ autoReloadAfterClear: value }),
       setLinkedOrigins: (value) => set({ linkedOrigins: value }),
       setUseOriginMappings: (value) => set({ useOriginMappings: value }),
+      setProtectedSites: (value) => set({ protectedSites: value }),
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
       resetSettings: () => set(DEFAULTS),
+      importSettings: (data) => set(data),
     }),
     {
       name: 'cache-cleaner-settings',
-      storage: createJSONStorage(() => browserLocalStorage),
+      storage: createJSONStorage(() => browserSyncStorage),
     },
   ),
 );

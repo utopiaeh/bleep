@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { browser, type Browser } from 'wxt/browser';
 import { HelpPanel } from '../../components/HelpPanel';
+import { BackupSection } from '../../components/options/BackupSection';
+import { ClearLogSection } from '../../components/options/ClearLogSection';
 import { GlobalSection } from '../../components/options/GlobalSection';
 import { LanguageSection } from '../../components/options/LanguageSection';
 import { PerSiteSection } from '../../components/options/PerSiteSection';
@@ -10,6 +12,7 @@ import { type ClearStatus } from '../../components/StatusButton';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
+import { recordClear } from '../../store/clearLog';
 import { useSettingsStore } from '../../store/settings';
 import { isGeckoBased } from '../../utils/browser-info';
 import {
@@ -18,6 +21,8 @@ import {
   clearTab,
   clearTabData,
   dedupeSitesByHostname,
+  filterProtectedTargets,
+  isProtectedSite,
   linkedOriginsFor,
   requestOriginPermission,
   siteScopedIds,
@@ -49,6 +54,8 @@ export default function App() {
     setLinkedOrigins,
     useOriginMappings,
     setUseOriginMappings,
+    protectedSites,
+    setProtectedSites,
     theme,
     setTheme,
     language,
@@ -91,9 +98,12 @@ export default function App() {
 
   const filteredTabs = useMemo(() => {
     const q = siteFilter.trim().toLowerCase();
-    if (!q) return tabs;
-    return tabs.filter((tab) => (tabDomain(tab) ?? '').toLowerCase().includes(q));
-  }, [tabs, siteFilter]);
+    return tabs.filter((tab) => {
+      const domain = tabDomain(tab) ?? '';
+      if (isProtectedSite(protectedSites, domain)) return false;
+      return !q || domain.toLowerCase().includes(q);
+    });
+  }, [tabs, siteFilter, protectedSites]);
 
   const filteredHistory = useMemo(() => {
     const q = historyFilter.trim().toLowerCase();
@@ -104,9 +114,9 @@ export default function App() {
   const visitedSites = useMemo(
     () =>
       dedupeSitesByHostname(visitedHistory.map((item) => item.url)).filter(
-        (site) => !clearedHostnames.has(site.hostname),
+        (site) => !clearedHostnames.has(site.hostname) && !isProtectedSite(protectedSites, site.hostname),
       ),
-    [visitedHistory, clearedHostnames],
+    [visitedHistory, clearedHostnames, protectedSites],
   );
 
   const filteredVisitedSites = useMemo(() => {
@@ -119,6 +129,7 @@ export default function App() {
     setGlobalStatus('clearing');
     try {
       await clearGlobal(selectedTypesGlobal);
+      recordClear('(global)', selectedTypesGlobal);
       setGlobalStatus('done');
     } catch (err) {
       console.error('Bleep: global clear failed', err);
@@ -129,6 +140,7 @@ export default function App() {
 
   async function handleSiteClear(tab: Tab) {
     if (tab.id == null || isReloading(tab.id)) return;
+    if (isProtectedSite(protectedSites, tabDomain(tab) ?? '')) return;
     setBusyTabIds((s) => new Set(s).add(tab.id!));
     setFailedTabIds((s) => {
       const next = new Set(s);
@@ -141,13 +153,14 @@ export default function App() {
       if (!ok) setFailedTabIds((s) => new Set(s).add(tab.id!));
       else {
         const origin = tabOrigin(tab);
+        let linkedTargets: string[] = [];
         if (useOriginMappings && origin) {
+          linkedTargets = filterProtectedTargets(linkedOriginsFor(linkedOrigins, origin), protectedSites);
           await Promise.all(
-            linkedOriginsFor(linkedOrigins, origin).map((target) =>
-              clearLinkedOrigin(target, ids, tabCookieStoreId(tab)),
-            ),
+            linkedTargets.map((target) => clearLinkedOrigin(target, ids, tabCookieStoreId(tab))),
           );
         }
+        recordClear(tabDomain(tab) ?? origin ?? tab.url ?? '?', ids, linkedTargets);
         if (autoReloadAfterClear) {
           markReloading(tab.id);
           browser.tabs.reload(tab.id, { bypassCache: true });
@@ -184,6 +197,7 @@ export default function App() {
       const clearedTabIds: number[] = [];
       const linkedTasks: Promise<unknown>[] = [];
       const seenLinkedClears = new Set<string>();
+      const allLinkedTargets: string[] = [];
       for (const result of results) {
         if (result.status === 'rejected') continue;
         const { tab, ok } = result.value;
@@ -196,14 +210,18 @@ export default function App() {
         const origin = tabOrigin(tab);
         if (!origin) continue;
         const storeId = tabCookieStoreId(tab);
-        for (const target of linkedOriginsFor(linkedOrigins, origin)) {
+        for (const target of filterProtectedTargets(linkedOriginsFor(linkedOrigins, origin), protectedSites)) {
           const key = `${storeId ?? ''}||${target}`;
           if (seenLinkedClears.has(key)) continue;
           seenLinkedClears.add(key);
+          allLinkedTargets.push(target);
           linkedTasks.push(clearLinkedOrigin(target, ids, storeId));
         }
       }
       await Promise.all(linkedTasks);
+      if (clearedTabIds.length > 0) {
+        recordClear(t('clearLogBulkTabs', { count: clearedTabIds.length }), ids, allLinkedTargets);
+      }
       if (autoReloadAfterClear) {
         for (const tabId of clearedTabIds) {
           markReloading(tabId);
@@ -220,20 +238,31 @@ export default function App() {
     setTimeout(() => setBulkStatus('idle'), 1500);
   }
 
-  async function clearVisitedSite(site: VisitedSite): Promise<boolean> {
+  async function clearVisitedSite(site: VisitedSite): Promise<string[]> {
     const ids = siteScopedIds(selectedTypesSite);
-    await clearLinkedOrigin(site.origin, ids);
-    if (useOriginMappings) {
-      await Promise.all(
-        linkedOriginsFor(linkedOrigins, site.origin).map((target) =>
-          clearLinkedOrigin(target, ids),
-        ),
-      );
+    // Firefox has no native per-site clear for cache/localStorage/sessionStorage, so
+    // clearLinkedOrigin falls back to a throwaway background tab for those. If the
+    // site is already open in a real tab, clear through that instead — no extra tab,
+    // and it picks up the tab's actual cookieStoreId (Firefox container) for free.
+    const openTab = (await browser.tabs.query({})).find((tab) => tabDomain(tab) === site.hostname);
+    const cookieStoreId = openTab ? tabCookieStoreId(openTab) : undefined;
+
+    if (openTab?.id != null) {
+      await clearTabData(openTab, ids);
+    } else {
+      await clearLinkedOrigin(site.origin, ids);
     }
-    return true;
+
+    let linkedTargets: string[] = [];
+    if (useOriginMappings) {
+      linkedTargets = filterProtectedTargets(linkedOriginsFor(linkedOrigins, site.origin), protectedSites);
+      await Promise.all(linkedTargets.map((target) => clearLinkedOrigin(target, ids, cookieStoreId)));
+    }
+    return linkedTargets;
   }
 
   async function handleClearVisitedSite(site: VisitedSite) {
+    if (isProtectedSite(protectedSites, site.hostname)) return;
     setBusyVisitedHostnames((s) => new Set(s).add(site.hostname));
     setFailedVisitedHostnames((s) => {
       const next = new Set(s);
@@ -243,7 +272,8 @@ export default function App() {
     try {
       const granted = await requestOriginPermission();
       if (!granted) throw new Error('permission denied');
-      await clearVisitedSite(site);
+      const linkedTargets = await clearVisitedSite(site);
+      recordClear(site.hostname, siteScopedIds(selectedTypesSite), linkedTargets);
       setClearedHostnames((s) => new Set(s).add(site.hostname));
     } catch (err) {
       console.error('Bleep: visited site clear failed', err);
@@ -270,18 +300,30 @@ export default function App() {
       setBusyVisitedHostnames(new Set(targets.map((s) => s.hostname)));
       const results = await mapWithConcurrency(targets, VISITED_CLEAR_CONCURRENCY, async (site) => {
         try {
-          await clearVisitedSite(site);
-          return { site, ok: true };
+          const linkedTargets = await clearVisitedSite(site);
+          return { site, ok: true, linkedTargets };
         } catch (err) {
           console.error('Bleep: visited site clear failed', site.hostname, err);
-          return { site, ok: false };
+          return { site, ok: false, linkedTargets: [] as string[] };
         }
       });
       const failed = new Set<string>();
       const cleared = new Set<string>();
-      for (const { site, ok } of results) {
-        if (ok) cleared.add(site.hostname);
-        else failed.add(site.hostname);
+      const allLinkedTargets: string[] = [];
+      for (const { site, ok, linkedTargets } of results) {
+        if (ok) {
+          cleared.add(site.hostname);
+          allLinkedTargets.push(...linkedTargets);
+        } else {
+          failed.add(site.hostname);
+        }
+      }
+      if (cleared.size > 0) {
+        recordClear(
+          t('clearLogBulkVisited', { count: cleared.size }),
+          siteScopedIds(selectedTypesSite),
+          allLinkedTargets,
+        );
       }
       setClearedHostnames((s) => new Set([...s, ...cleared]));
       setFailedVisitedHostnames(failed);
@@ -332,6 +374,10 @@ export default function App() {
           <>
             <ThemeSection theme={theme} onChange={setTheme} />
             <LanguageSection language={language} onChange={setLanguage} />
+            <hr className="border-stone-200 dark:border-stone-700 mb-3" />
+            <BackupSection />
+            <hr className="border-stone-200 dark:border-stone-700 mb-3" />
+            <ClearLogSection />
           </>
         )}
 
@@ -348,6 +394,7 @@ export default function App() {
             historyStatus={historyBulkStatus}
             onClearAllHistory={handleClearAllHistory}
             onDeleteHistoryItem={handleDeleteHistoryItem}
+            hasProtectedSites={protectedSites.trim().length > 0}
           />
         )}
 
@@ -362,6 +409,8 @@ export default function App() {
             onUseOriginMappingsChange={setUseOriginMappings}
             linkedOrigins={linkedOrigins}
             onLinkedOriginsChange={setLinkedOrigins}
+            protectedSites={protectedSites}
+            onProtectedSitesChange={setProtectedSites}
             siteFilter={siteFilter}
             onSiteFilterChange={setSiteFilter}
             bulkStatus={bulkStatus}

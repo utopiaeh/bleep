@@ -71,22 +71,17 @@ async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string,
     });
   }
 
+  // Only cacheStorage/sessionStorage land here — indexedDB, localStorage, and
+  // serviceWorkers are all natively hostname-scoped by browsingData.remove on
+  // Firefox (see clearHostnameScopedNative), so they never need a tab at all.
   const handlers: Record<string, () => Promise<void> | void> = {
     async cacheStorage() {
       if (!('caches' in self)) return;
       const keys = await caches.keys();
       await Promise.all(keys.map((key) => caches.delete(key)));
     },
-    localStorage() {
-      localStorage.clear();
-    },
     sessionStorage() {
       sessionStorage.clear();
-    },
-    async serviceWorkers() {
-      if (!('serviceWorker' in navigator)) return;
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((r) => r.unregister()));
     },
   };
 
@@ -103,10 +98,26 @@ async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string,
   return { failed };
 }
 
-async function clearIndexedDBForHostname(hostname: string): Promise<void> {
+// Firefox's browsingData.remove({hostnames}) natively scopes these three to one
+// site (indexedDB since FF77, localStorage/serviceWorkers since FF56) — no tab or
+// content script needed, unlike cacheStorage/sessionStorage/cache which Firefox has
+// no per-site API for at all.
+const NATIVE_HOSTNAME_KEYS: Partial<Record<DataTypeId, string>> = {
+  indexedDB: 'indexedDB',
+  localStorage: 'localStorage',
+  serviceWorkers: 'serviceWorkers',
+};
+
+async function clearHostnameScopedNative(hostname: string, ids: DataTypeId[]): Promise<void> {
+  const dataToRemove: Record<string, boolean> = {};
+  for (const id of ids) {
+    const key = NATIVE_HOSTNAME_KEYS[id];
+    if (key) dataToRemove[key] = true;
+  }
+  if (Object.keys(dataToRemove).length === 0) return;
   await browser.browsingData.remove(
     { hostnames: [hostname] } as Parameters<typeof browser.browsingData.remove>[0],
-    { indexedDB: true },
+    dataToRemove,
   );
 }
 
@@ -134,7 +145,7 @@ async function clearSiteViaContentScript(
   cookieStoreId?: string,
 ): Promise<void> {
   const scoped = siteScopedIds(ids);
-  const scriptIds = scoped.filter((id) => id !== 'cookies' && id !== 'indexedDB');
+  const scriptIds = scoped.filter((id) => id === 'cacheStorage' || id === 'sessionStorage');
 
   const tasks: Promise<unknown>[] = [];
   if (scriptIds.length > 0) {
@@ -143,8 +154,8 @@ async function clearSiteViaContentScript(
   if (scoped.includes('cookies')) {
     tasks.push(withTimeout(clearCookiesForOrigin(origin, cookieStoreId), 15000));
   }
-  if (scoped.includes('indexedDB')) {
-    tasks.push(withTimeout(clearIndexedDBForHostname(new URL(origin).hostname), 15000));
+  if (scoped.some((id) => id in NATIVE_HOSTNAME_KEYS)) {
+    tasks.push(withTimeout(clearHostnameScopedNative(new URL(origin).hostname, scoped), 15000));
   }
   await Promise.all(tasks);
 }
@@ -257,6 +268,30 @@ export function linkedOriginsFor(raw: string, activeOrigin: string): string[] {
     .flatMap((m) => m.targets);
 }
 
+function parseHostList(raw: string): string[] {
+  return raw
+    .split('\n')
+    .map((line) => extractHostname(line))
+    .filter(Boolean);
+}
+
+/** Same subdomain-covering semantics as linkedOriginsFor's source matching — a
+ * protected entry of "domain.com" also protects "sso.domain.com". Doesn't apply to
+ * the Global scope: browsingData.remove has no way to exclude specific origins from
+ * an unscoped clear, so protection only guards the per-site clear surfaces (tabs,
+ * visited sites, and mapped linked-origin targets). */
+export function isProtectedSite(raw: string, hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return parseHostList(raw).some((protectedHost) => host === protectedHost || host.endsWith(`.${protectedHost}`));
+}
+
+/** Drops any linked-origin target that's itself protected, so a mapping can't be
+ * used to route around the protected-sites list. */
+export function filterProtectedTargets(targets: string[], protectedRaw: string): string[] {
+  if (!protectedRaw.trim()) return targets;
+  return targets.filter((target) => !isProtectedSite(protectedRaw, extractHostname(target)));
+}
+
 function waitForTabComplete(tabId: number, ms: number): Promise<void> {
   return withTimeout(
     new Promise<void>((resolve) => {
@@ -281,7 +316,7 @@ export async function clearLinkedOrigin(
   if (scoped.length === 0) return;
 
   if (import.meta.env.FIREFOX) {
-    const scriptIds = scoped.filter((id) => id !== 'cookies' && id !== 'indexedDB');
+    const scriptIds = scoped.filter((id) => id === 'cacheStorage' || id === 'sessionStorage');
     let scriptError: unknown;
     if (scriptIds.length > 0) {
       try {
@@ -307,8 +342,8 @@ export async function clearLinkedOrigin(
     if (scoped.includes('cookies')) {
       tasks.push(withTimeout(clearCookiesForOrigin(origin, cookieStoreId), 15000));
     }
-    if (scoped.includes('indexedDB')) {
-      tasks.push(withTimeout(clearIndexedDBForHostname(new URL(origin).hostname), 15000));
+    if (scoped.some((id) => id in NATIVE_HOSTNAME_KEYS)) {
+      tasks.push(withTimeout(clearHostnameScopedNative(new URL(origin).hostname, scoped), 15000));
     }
     await Promise.all(tasks);
 
@@ -352,6 +387,11 @@ export function dedupeSitesByHostname(urls: Array<string | undefined>): VisitedS
     if (!url) continue;
     try {
       const parsed = new URL(url);
+      // Only http(s) sites are real per-site clear targets. chrome://, about:, and
+      // file:// all parse without throwing, but either have no hostname at all (blank
+      // row) or a bogus one (e.g. "chrome://extensions/" parses to hostname
+      // "extensions", which isn't a site anyone meant to clear).
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') continue;
       if (!seen.has(parsed.hostname)) seen.set(parsed.hostname, parsed.origin);
     } catch {
       // not a parsable URL — skip

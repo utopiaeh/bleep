@@ -6,6 +6,7 @@ import type { VisitedSite } from '../../utils/clearing';
 import { DataTypeGrid } from '../DataTypeGrid';
 import { OriginMappingsEditor } from '../OriginMappingsEditor';
 import { type ClearStatus } from '../StatusButton';
+import { ProtectedSitesSection } from './ProtectedSitesSection';
 import { SiteTabsSection } from './SiteTabsSection';
 import { VisitedSitesSection } from './VisitedSitesSection';
 
@@ -19,6 +20,8 @@ interface PerSiteSectionProps {
   onUseOriginMappingsChange: (value: boolean) => void;
   linkedOrigins: string;
   onLinkedOriginsChange: (value: string) => void;
+  protectedSites: string;
+  onProtectedSitesChange: (value: string) => void;
   siteFilter: string;
   onSiteFilterChange: (value: string) => void;
   bulkStatus: ClearStatus;
@@ -48,6 +51,8 @@ export function PerSiteSection({
   onUseOriginMappingsChange,
   linkedOrigins,
   onLinkedOriginsChange,
+  protectedSites,
+  onProtectedSitesChange,
   siteFilter,
   onSiteFilterChange,
   bulkStatus,
@@ -103,6 +108,8 @@ export function PerSiteSection({
       <div className="mb-3 max-w-xl">
         <OriginMappingsEditor value={linkedOrigins} onChange={onLinkedOriginsChange} />
       </div>
+
+      <ProtectedSitesSection value={protectedSites} onChange={onProtectedSitesChange} />
 
       <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 
