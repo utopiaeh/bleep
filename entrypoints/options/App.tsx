@@ -400,7 +400,7 @@ export default function App() {
 
             <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 
-            <div className="flex flex-col gap-2 mb-3">
+            <div className="flex flex-col items-start gap-2 mb-3">
               <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="checkbox"
