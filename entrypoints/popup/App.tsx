@@ -9,6 +9,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { recordClear } from '../../store/clearLog';
 import { useSettingsStore } from '../../store/settings';
+import { runClear } from '../../utils/clear-status';
 import {
   clearGlobal,
   clearLinkedOrigin,
@@ -20,7 +21,7 @@ import {
   requestOriginPermission,
   siteScopedIds,
   tabCookieStoreId,
-  tabDomain,
+  tabHostname,
   tabOrigin,
 } from '../../utils/clearing';
 import { siteScopedDataTypes } from '../../utils/data-types';
@@ -42,23 +43,20 @@ export default function App() {
   const [status, setStatus] = useState<ClearStatus>('idle');
   const [tabStatus, setTabStatus] = useState<ClearStatus>('idle');
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
-  const [activeTabDomain, setActiveTabDomain] = useState<string | null>(null);
+  const [activeTabHostname, setActiveTabHostname] = useState<string | null>(null);
   const { markReloading, isReloading } = useReloadGuard();
 
   useEffect(() => {
     browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
       setActiveTabId(tab?.id ?? null);
-      setActiveTabDomain(tab ? tabDomain(tab) : null);
+      setActiveTabHostname(tab ? tabHostname(tab) : null);
     });
   }, []);
 
-  const isActiveTabProtected = activeTabDomain != null && isProtectedSite(protectedSites, activeTabDomain);
+  const isActiveTabProtected = activeTabHostname != null && isProtectedSite(protectedSites, activeTabHostname);
 
   async function handleClear() {
-    setStatus('clearing');
-    try {
-      // Only fetch history (needed to resolve protected hostnames to real origins) if
-      // there's actually something to exclude — most popup opens won't need this.
+    await runClear(setStatus, async () => {
       let excludeOrigins: string[] = [];
       if (protectedSites.trim()) {
         const historyItems = await browser.history.search({ text: '', maxResults: 1000 });
@@ -68,12 +66,7 @@ export default function App() {
       }
       await clearGlobal(selectedTypesGlobal, excludeOrigins);
       recordClear('(global)', selectedTypesGlobal);
-      setStatus('done');
-    } catch (err) {
-      console.error('Bleep: global clear failed', err);
-      setStatus('failed');
-    }
-    setTimeout(() => setStatus('idle'), 1500);
+    });
   }
 
   async function handleClearActiveTab() {
@@ -99,7 +92,7 @@ export default function App() {
               );
             }
           }
-          recordClear(tabDomain(activeTab) ?? activeTab.url ?? '?', ids, linkedTargets);
+          recordClear(tabHostname(activeTab) ?? activeTab.url ?? '?', ids, linkedTargets);
         }
         setTabStatus(ok ? 'done' : 'failed');
         if (ok && autoReloadAfterClear && activeTab?.id != null) {

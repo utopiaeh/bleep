@@ -1,8 +1,9 @@
 import type { Browser } from 'wxt/browser';
 import { useTranslation } from '../../hooks/useTranslation';
+import { clearAllLabel } from '../../utils/clear-status';
+import { FilterRow } from '../FilterRow';
 import { type ClearStatus } from '../StatusButton';
 import { TabClearList } from '../TabClearList';
-import { clearAllLabel } from '../../utils/clear-status';
 
 interface SiteTabsSectionProps {
   filter: string;
@@ -33,14 +34,7 @@ export function SiteTabsSection({
     <div>
       <p className="text-xs text-stone-500 mb-2">{t('openTabsOnly')}</p>
 
-      <div className="flex gap-2 mb-2">
-        <input
-          type="text"
-          value={filter}
-          onChange={(e) => onFilterChange(e.target.value)}
-          placeholder={t('filterTabsPlaceholder')}
-          className="flex-1 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
-        />
+      <FilterRow value={filter} onChange={onFilterChange} placeholder={t('filterTabsPlaceholder')}>
         <button
           onClick={onClearAll}
           disabled={status === 'clearing' || tabs.length === 0}
@@ -48,7 +42,7 @@ export function SiteTabsSection({
         >
           {clearAllLabel(t, status, tabs.length)}
         </button>
-      </div>
+      </FilterRow>
 
       <TabClearList
         tabs={tabs}

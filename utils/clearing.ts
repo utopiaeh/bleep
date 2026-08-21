@@ -197,14 +197,10 @@ async function clearCookiesForOrigin(origin: string, storeId?: string): Promise<
   );
 }
 
-/** Adds https:// if no scheme is present, so plain "domain.com" parses the same as
- * "https://domain.com". */
 function withScheme(s: string): string {
   return /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(s) ? s : `https://${s}`;
 }
 
-/** A target needs to be a real origin for the clearing calls; accepts scheme-less
- * input and strips any path/query the user pastes along with it. */
 function normalizeTargetOrigin(input: string): string {
   const trimmed = input.trim();
   try {
@@ -214,7 +210,6 @@ function normalizeTargetOrigin(input: string): string {
   }
 }
 
-/** Ignores scheme and path — only the hostname matters for matching a mapping. */
 function extractHostname(input: string): string {
   const trimmed = input.trim();
   try {
@@ -226,8 +221,8 @@ function extractHostname(input: string): string {
 
 const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
-/** Loose check for "does this look like a domain" (e.g. rejects "asdasd"), used for
- * inline validation hints only — matching itself (linkedOriginsFor) doesn't call this. */
+/** Loose check for "does this look like a domain" (rejects e.g. "asdasd") — used
+ * only for inline validation hints, not for matching. */
 export function isValidHost(input: string): boolean {
   const host = extractHostname(input);
   if (!host) return false;
@@ -289,26 +284,27 @@ export function isProtectedSite(raw: string, hostname: string): boolean {
   return parseHostList(raw).some((protectedHost) => host === protectedHost || host.endsWith(`.${protectedHost}`));
 }
 
-/** Drops any linked-origin target that's itself protected, so a mapping can't be
- * used to route around the protected-sites list. */
 export function filterProtectedTargets(targets: string[], protectedRaw: string): string[] {
   if (!protectedRaw.trim()) return targets;
   return targets.filter((target) => !isProtectedSite(protectedRaw, extractHostname(target)));
 }
 
 function waitForTabComplete(tabId: number, ms: number): Promise<void> {
-  return withTimeout(
-    new Promise<void>((resolve) => {
-      function onUpdated(id: number, info: { status?: string }) {
-        if (id === tabId && info.status === 'complete') {
-          browser.tabs.onUpdated.removeListener(onUpdated);
-          resolve();
-        }
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      browser.tabs.onUpdated.removeListener(onUpdated);
+      reject(new Error(`Timed out after ${ms}ms`));
+    }, ms);
+
+    function onUpdated(id: number, info: { status?: string }) {
+      if (id === tabId && info.status === 'complete') {
+        clearTimeout(timer);
+        browser.tabs.onUpdated.removeListener(onUpdated);
+        resolve();
       }
-      browser.tabs.onUpdated.addListener(onUpdated);
-    }),
-    ms,
-  );
+    }
+    browser.tabs.onUpdated.addListener(onUpdated);
+  });
 }
 
 export async function clearLinkedOrigin(
@@ -371,7 +367,7 @@ export function tabOrigin(tab: { url?: string }): string | null {
   }
 }
 
-export function tabDomain(tab: { url?: string }): string | null {
+export function tabHostname(tab: { url?: string }): string | null {
   if (!tab.url) return null;
   try {
     return new URL(tab.url).hostname;
@@ -398,7 +394,7 @@ export function dedupeSitesByHostname(urls: Array<string | undefined>): VisitedS
       if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') continue;
       if (!seen.has(parsed.hostname)) seen.set(parsed.hostname, parsed.origin);
     } catch {
-      // not a parsable URL — skip
+      // skip
     }
   }
   return Array.from(seen, ([hostname, origin]) => ({ hostname, origin }));

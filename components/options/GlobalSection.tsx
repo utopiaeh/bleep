@@ -4,6 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { DATA_TYPES, type DataTypeId } from '../../utils/data-types';
 import { DangerConfirmButton } from '../DangerConfirmButton';
 import { DataTypeGrid } from '../DataTypeGrid';
+import { SectionHeading } from '../SectionHeading';
 import { type ClearStatus } from '../StatusButton';
 import { HistorySection } from './HistorySection';
 
@@ -41,10 +42,7 @@ export function GlobalSection({
 
   return (
     <section className="mb-8">
-      <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
-        {t('scopeGlobal')}
-      </h2>
-      <p className="text-xs text-stone-500 mb-2">{t('scopeGlobalDescription')}</p>
+      <SectionHeading title={t('scopeGlobal')} description={t('scopeGlobalDescription')} />
       <DataTypeGrid types={DATA_TYPES} selected={selectedTypes} onToggle={onToggleType} className="mb-2" />
       <p className="text-xs text-stone-500 mb-3">{t('storageKeyShareNote')}</p>
       <div className="max-w-xs">
