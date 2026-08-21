@@ -16,8 +16,8 @@ export function BehaviorToggles({
   const t = useTranslation();
 
   return (
-    <>
-      <label className="inline-flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 mb-2 cursor-pointer">
+    <div className="flex flex-col items-start gap-2">
+      <label className="inline-flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 cursor-pointer">
         <input
           type="checkbox"
           checked={autoReloadAfterClear}
@@ -36,6 +36,6 @@ export function BehaviorToggles({
         />
         {t('useOriginMappings')}
       </label>
-    </>
+    </div>
   );
 }
