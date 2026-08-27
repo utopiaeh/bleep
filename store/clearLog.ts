@@ -19,9 +19,6 @@ interface ClearLogState {
   clearLog: () => void;
 }
 
-// Device-specific activity, not a preference — kept in local storage rather than the
-// synced settings store so it doesn't consume the sync quota or show up on other
-// machines as "stuff that happened somewhere else".
 export const useClearLogStore = create<ClearLogState>()(
   persist(
     (set, get) => ({
@@ -35,6 +32,14 @@ export const useClearLogStore = create<ClearLogState>()(
     {
       name: 'cache-cleaner-clear-log',
       storage: createJSONStorage(() => browserLocalStorage),
+      version: 1,
+      migrate: (persisted) => persisted as ClearLogState,
+      merge: (persisted, current) => ({
+        ...current,
+        entries: Array.isArray((persisted as Partial<ClearLogState> | null)?.entries)
+          ? (persisted as ClearLogState).entries
+          : current.entries,
+      }),
     },
   ),
 );

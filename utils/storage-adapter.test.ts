@@ -2,8 +2,6 @@ import { browser } from 'wxt/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { browserSyncStorage } from './storage-adapter';
 
-// fake-browser doesn't implement storage.sync at all — back it with a plain in-memory
-// object so get/set/remove behave like the real StorageArea API.
 function stubSyncStorage() {
   const data: Record<string, unknown> = {};
   Object.assign(browser, {
@@ -42,7 +40,6 @@ describe('browserSyncStorage', () => {
     const big = 'x'.repeat(20000);
     await browserSyncStorage.setItem('settings', big);
     expect(await browserSyncStorage.getItem('settings')).toBe(big);
-    // sanity: confirm it's actually split, not stored as one oversized item
     expect(browser.storage.sync.set).toHaveBeenCalled();
     const lastCallArgs = (browser.storage.sync.set as ReturnType<typeof vi.fn>).mock.calls.at(-1)![0];
     expect(Object.keys(lastCallArgs).length).toBeGreaterThan(1);
@@ -76,7 +73,6 @@ describe('browserSyncStorage', () => {
       .mockResolvedValue({ settings: '{"legacy":true}' });
 
     expect(await browserSyncStorage.getItem('settings')).toBe('{"legacy":true}');
-    // migrated forward — a second read shouldn't need storage.local anymore
     expect(await browserSyncStorage.getItem('settings')).toBe('{"legacy":true}');
   });
 });

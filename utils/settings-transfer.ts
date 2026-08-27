@@ -1,4 +1,4 @@
-import { DEFAULTS, type Theme } from '../store/settings';
+import { DEFAULTS, type Theme } from './settings-defaults';
 import type { Language } from './i18n';
 
 export type ExportableSettings = typeof DEFAULTS;
@@ -24,17 +24,18 @@ function isValidField(key: keyof ExportableSettings, value: unknown): boolean {
   return typeof value === typeof defaultValue;
 }
 
-/** Only known keys with the right shape survive — an untrusted/edited-by-hand file
- * can't inject unexpected fields or crash the UI with e.g. an unrecognized theme or
- * language string (translate() would throw on a language not in its dictionary). */
-export function parseImportedSettings(json: string): Partial<ExportableSettings> {
-  const parsed = JSON.parse(json) as Record<string, unknown>;
+export function sanitizeSettings(value: unknown): Partial<ExportableSettings> {
+  const parsed = (value ?? {}) as Record<string, unknown>;
   const result: Partial<ExportableSettings> = {};
   for (const key of Object.keys(DEFAULTS) as (keyof ExportableSettings)[]) {
-    const value = parsed[key];
-    if (value !== undefined && isValidField(key, value)) {
-      (result as Record<string, unknown>)[key] = value;
+    const v = parsed[key];
+    if (v !== undefined && isValidField(key, v)) {
+      (result as Record<string, unknown>)[key] = v;
     }
   }
   return result;
+}
+
+export function parseImportedSettings(json: string): Partial<ExportableSettings> {
+  return sanitizeSettings(JSON.parse(json));
 }

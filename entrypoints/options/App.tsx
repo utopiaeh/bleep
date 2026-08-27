@@ -5,6 +5,7 @@ import { HelpPanel } from '../../components/HelpPanel';
 import { OriginMappingsEditor } from '../../components/OriginMappingsEditor';
 import { BackupSection } from '../../components/options/BackupSection';
 import { ClearLogSection } from '../../components/options/ClearLogSection';
+import { ErrorLogSection } from '../../components/options/ErrorLogSection';
 import { GlobalSection } from '../../components/options/GlobalSection';
 import { LanguageSection } from '../../components/options/LanguageSection';
 import { ProtectedSitesSection } from '../../components/options/ProtectedSitesSection';
@@ -19,6 +20,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { recordClear } from '../../store/clearLog';
 import { useSettingsStore } from '../../store/settings';
+import { useStorageErrorStore } from '../../store/storageError';
 import { isGeckoBased } from '../../utils/browser-info';
 import { runClear } from '../../utils/clear-status';
 import {
@@ -138,8 +140,6 @@ export default function App() {
   }, [visitedSites, visitedSiteFilter]);
 
   async function handleGlobalClear() {
-    // Only Chrome can exclude specific origins from an unscoped clear at all, and only
-    // for sites we actually know the real origin of (i.e. ones in your history).
     const excludeOrigins = allVisitedSites
       .filter((site) => isProtectedSite(protectedSites, site.hostname))
       .map((site) => site.origin);
@@ -244,8 +244,6 @@ export default function App() {
 
   async function clearVisitedSite(site: VisitedSite): Promise<string[]> {
     const ids = siteScopedIds(selectedTypesSite);
-    // Prefer an already-open tab over clearLinkedOrigin's throwaway background tab —
-    // picks up the tab's real cookieStoreId (Firefox container) too.
     const openTab = (await browser.tabs.query({})).find((tab) => tabHostname(tab) === site.hostname);
     const cookieStoreId = openTab ? tabCookieStoreId(openTab) : undefined;
 
@@ -355,6 +353,9 @@ export default function App() {
     setTimeout(() => setHistoryBulkStatus('idle'), 1500);
   }
 
+  const storageError = useStorageErrorStore((s) => s.message);
+  const clearStorageError = useStorageErrorStore((s) => s.clear);
+
   return (
     <div className="min-h-screen w-full bg-stone-50 dark:bg-stone-900">
       <div className="text-stone-900 dark:text-stone-100 p-8 max-w-4xl mx-auto">
@@ -362,6 +363,15 @@ export default function App() {
           <img src="/icon/48.png" alt="" className="w-8 h-8 shrink-0" />
           <h1 className="text-2xl font-semibold whitespace-nowrap">{t('settingsTitle')}</h1>
         </div>
+
+        {storageError && (
+          <div className="flex items-center justify-between gap-3 mb-4 rounded-md border border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            <span>{storageError}</span>
+            <button type="button" onClick={clearStorageError} className="shrink-0 cursor-pointer underline">
+              {t('remove')}
+            </button>
+          </div>
+        )}
 
         <SettingsHeader activeTab={activeTab} onTabChange={setActiveTab} onReset={resetSettings} />
 
@@ -373,6 +383,7 @@ export default function App() {
             <BackupSection />
             <hr className="border-stone-200 dark:border-stone-700 mb-3" />
             <ClearLogSection />
+            <ErrorLogSection />
           </>
         )}
 

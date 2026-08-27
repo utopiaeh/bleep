@@ -15,9 +15,6 @@ export async function getSupportedKeys(): Promise<Set<string>> {
   return new Set(Object.keys(settings.dataToRemove));
 }
 
-/** Chrome (since Chrome 74) supports excludeOrigins on an unscoped clear — Firefox
- * has no equivalent (Bugzilla 1632796, still open), so exclusion there is a no-op:
- * Global stays all-or-nothing on Firefox regardless of a protected-sites list. */
 export async function clearGlobal(ids: DataTypeId[], excludeOrigins: string[] = []): Promise<void> {
   const supported = await getSupportedKeys();
   const dataToRemove = toRemovalOptions(ids, supported);
@@ -34,7 +31,6 @@ export function siteScopedIds(ids: DataTypeId[]): DataTypeId[] {
   return ids.filter((id) => scoped.has(id));
 }
 
-/** Chrome/Chromium: browsingData's `origins` param scopes removal to one site. On Firefox it does not work. */
 export async function clearSiteViaBrowsingData(origin: string, ids: DataTypeId[]): Promise<void> {
   const supported = await getSupportedKeys();
   const dataToRemove = toRemovalOptions(siteScopedIds(ids), supported);
@@ -59,9 +55,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string, string> }> {
-  // Duplicated from the module-level withTimeout: this function is serialized and
-  // injected into the page by scripting.executeScript, so it can't close over
-  // anything outside itself.
   function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms);
@@ -78,9 +71,6 @@ async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string,
     });
   }
 
-  // Only cacheStorage/sessionStorage land here — indexedDB, localStorage, and
-  // serviceWorkers are all natively hostname-scoped by browsingData.remove on
-  // Firefox (see clearHostnameScopedNative), so they never need a tab at all.
   const handlers: Record<string, () => Promise<void> | void> = {
     async cacheStorage() {
       if (!('caches' in self)) return;
@@ -105,10 +95,6 @@ async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string,
   return { failed };
 }
 
-// Firefox's browsingData.remove({hostnames}) natively scopes these three to one
-// site (indexedDB since FF77, localStorage/serviceWorkers since FF56) — no tab or
-// content script needed, unlike cacheStorage/sessionStorage/cache which Firefox has
-// no per-site API for at all.
 const NATIVE_HOSTNAME_KEYS: Partial<Record<DataTypeId, string>> = {
   indexedDB: 'indexedDB',
   localStorage: 'localStorage',
@@ -128,8 +114,6 @@ async function clearHostnameScopedNative(hostname: string, ids: DataTypeId[]): P
   );
 }
 
-/** allFrames: an auth widget commonly lives in an iframe on a different origin than
- * the top page — its storage is otherwise unreachable here. */
 async function runContentScriptClear(tabId: number, scriptIds: DataTypeId[]): Promise<void> {
   const injections = await browser.scripting.executeScript({
     target: { tabId, allFrames: true },
@@ -171,14 +155,6 @@ export async function requestOriginPermission(): Promise<boolean> {
   return browser.permissions.request({ origins: ['*://*/*'] });
 }
 
-/** document.cookie can't see HttpOnly cookies; the privileged cookies API can.
- * Firefox's Total Cookie Protection also partitions third-party cookies (e.g. an
- * SSO/silent-renew iframe from another domain, partitioned under whatever OTHER
- * top-level site embeds it) — a plain getAll() only sees the unpartitioned jar and
- * would silently miss a still-alive session cookie set that way. Passing an empty
- * partitionKey (per MDN) matches every partition regardless of its topLevelSite in
- * one call — matching on `partitionKey: { topLevelSite: origin }` would only catch
- * the origin partitioning itself, not the actual leak case this exists for. */
 async function clearCookiesForOrigin(origin: string, storeId?: string): Promise<void> {
   const options = { url: origin, storeId, partitionKey: {} } as Parameters<typeof browser.cookies.getAll>[0];
   const cookies = await browser.cookies
@@ -221,18 +197,12 @@ function extractHostname(input: string): string {
 
 const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
-/** Loose check for "does this look like a domain" (rejects e.g. "asdasd") — used
- * only for inline validation hints, not for matching. */
 export function isValidHost(input: string): boolean {
   const host = extractHostname(input);
   if (!host) return false;
   return host === 'localhost' || DOMAIN_RE.test(host);
 }
 
-/** One mapping per line: `source => target1, target2`. Lines with no `=>` (or an
- * empty source/target) are ignored. `source` is kept as typed (matching extracts
- * its hostname on demand); targets are normalized to full origins up front since
- * they're passed straight to the clearing calls. */
 export interface OriginMapping {
   source: string;
   targets: string[];
@@ -251,11 +221,6 @@ export function parseOriginMappings(raw: string): OriginMapping[] {
     .filter((m) => m.source && m.targets.length > 0);
 }
 
-/** Matches regardless of scheme or path, and treats the mapping's source as covering
- * its own subdomains too — e.g. a source of "domain.com" also matches
- * "sso.domain.com". A site with no matching mapping gets none. A mapping with an
- * invalid-looking source or any invalid-looking target is skipped entirely — the
- * editor shows these as errors instead of silently acting on them. */
 export function linkedOriginsFor(raw: string, activeOrigin: string): string[] {
   const activeHost = extractHostname(activeOrigin);
   return parseOriginMappings(raw)
@@ -274,11 +239,6 @@ function parseHostList(raw: string): string[] {
     .filter(Boolean);
 }
 
-/** Same subdomain-covering semantics as linkedOriginsFor's source matching — a
- * protected entry of "domain.com" also protects "sso.domain.com". Doesn't apply to
- * the Global scope: browsingData.remove has no way to exclude specific origins from
- * an unscoped clear, so protection only guards the per-site clear surfaces (tabs,
- * visited sites, and mapped linked-origin targets). */
 export function isProtectedSite(raw: string, hostname: string): boolean {
   const host = hostname.toLowerCase();
   return parseHostList(raw).some((protectedHost) => host === protectedHost || host.endsWith(`.${protectedHost}`));
@@ -353,7 +313,6 @@ export async function clearLinkedOrigin(
   }
 }
 
-/** Firefox-only field, absent from the shared cross-browser Tab type. */
 export function tabCookieStoreId(tab: object): string | undefined {
   return (tab as { cookieStoreId?: string }).cookieStoreId;
 }
@@ -387,14 +346,10 @@ export function dedupeSitesByHostname(urls: Array<string | undefined>): VisitedS
     if (!url) continue;
     try {
       const parsed = new URL(url);
-      // Only http(s) sites are real per-site clear targets. chrome://, about:, and
-      // file:// all parse without throwing, but either have no hostname at all (blank
-      // row) or a bogus one (e.g. "chrome://extensions/" parses to hostname
-      // "extensions", which isn't a site anyone meant to clear).
       if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') continue;
       if (!seen.has(parsed.hostname)) seen.set(parsed.hostname, parsed.origin);
     } catch {
-      // skip
+      continue;
     }
   }
   return Array.from(seen, ([hostname, origin]) => ({ hostname, origin }));

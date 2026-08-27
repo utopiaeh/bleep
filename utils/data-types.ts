@@ -32,9 +32,6 @@ export const DATA_TYPES: DataTypeDef[] = [
   { id: 'formData', browsingDataKey: 'formData', quick: false, siteScoped: false },
 ];
 
-/** Types actually usable for a per-site clear on the current browser — excludes
- * HTTP Cache on Firefox, which has no per-site clearing API at all (see
- * clearInMainWorld in utils/clearing.ts). */
 export function siteScopedDataTypes(): DataTypeDef[] {
   return DATA_TYPES.filter((type) => type.siteScoped && !(type.id === 'cache' && isGeckoBased()));
 }

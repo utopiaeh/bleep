@@ -1,7 +1,10 @@
 import { browser } from 'wxt/browser';
 import { defineBackground } from 'wxt/utils/define-background';
 import { linkedOriginsFor, tabOrigin } from '../../utils/clearing';
+import { installGlobalErrorLogging } from '../../utils/error-log';
 import { readPersistedSettingsRaw } from '../../utils/storage-adapter';
+
+installGlobalErrorLogging();
 
 const SETTINGS_KEY = 'cache-cleaner-settings';
 
@@ -81,10 +84,13 @@ export default defineBackground(() => {
     if (areaName !== 'sync' || !Object.keys(changes).some((key) => key.startsWith(SETTINGS_KEY)))
       return;
     invalidateMappingSettingsCache();
-    browser.tabs.query({ active: true }).then((tabs) => {
-      for (const tab of tabs) {
-        if (tab.id != null) updateIcon(tab.id, tab.url);
-      }
-    });
+    browser.tabs
+      .query({ active: true })
+      .then((tabs) => {
+        for (const tab of tabs) {
+          if (tab.id != null) updateIcon(tab.id, tab.url);
+        }
+      })
+      .catch(() => {});
   });
 });

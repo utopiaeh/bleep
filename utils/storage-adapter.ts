@@ -1,12 +1,8 @@
 import { browser } from 'wxt/browser';
 import type { Browser } from 'wxt/browser';
 import type { StateStorage } from 'zustand/middleware';
+import { useStorageErrorStore } from '../store/storageError';
 
-// storage.sync caps each item at ~8KB (Chrome: 8192 bytes/item, 100KB total) — a
-// mapping-heavy settings blob stored under one key can exceed that. Split into
-// fixed-size string chunks under a `${name}__N` key each, with `${name}__len`
-// tracking how many chunks exist, so the actual quota that matters is the ~100KB
-// total, not the ~8KB per-item cap.
 const CHUNK_SIZE = 6000;
 
 async function readChunked(area: Browser.storage.StorageArea, name: string): Promise<string | null> {
@@ -32,8 +28,6 @@ async function writeChunked(area: Browser.storage.StorageArea, name: string, val
   });
   await area.set(payload);
 
-  // A shrinking value (fewer chunks than before) must drop the now-unused trailing
-  // keys, or they sit there forever silently eating into the ~100KB total quota.
   if (oldLen > chunks.length) {
     const staleKeys = Array.from({ length: oldLen - chunks.length }, (_, i) => `${name}__${chunks.length + i}`);
     await area.remove(staleKeys);
@@ -60,10 +54,6 @@ export const browserLocalStorage: StateStorage = {
   },
 };
 
-/** Settings synced across the user's browsers via storage.sync. Falls back to
- * reading (and migrating forward) a pre-sync plain-JSON value that older versions
- * of Bleep stored directly under `name` in storage.local — a one-time, read-triggered
- * migration with no separate "have I migrated" flag needed. */
 export const browserSyncStorage: StateStorage = {
   getItem: async (name) => {
     const fromSync = await readChunked(browser.storage.sync, name);
@@ -77,16 +67,21 @@ export const browserSyncStorage: StateStorage = {
     return legacyValue ?? null;
   },
   setItem: async (name, value) => {
-    await writeChunked(browser.storage.sync, name, value);
+    try {
+      await writeChunked(browser.storage.sync, name, value);
+    } catch (e) {
+      console.error('Bleep: failed to save settings', e);
+      useStorageErrorStore
+        .getState()
+        .setError('Could not save — the change may be too large or sync storage is full.');
+      throw e;
+    }
   },
   removeItem: async (name) => {
     await removeChunked(browser.storage.sync, name);
   },
 };
 
-/** Reads the persisted settings JSON directly, bypassing zustand — used by the
- * background script, which can't rely on the store's React-oriented hydration
- * lifecycle inside a short-lived MV3 service worker. */
 export async function readPersistedSettingsRaw(name: string): Promise<unknown> {
   const raw = await browserSyncStorage.getItem(name);
   if (!raw) return null;

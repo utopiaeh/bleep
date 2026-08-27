@@ -2,28 +2,12 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { DataTypeId } from '../utils/data-types';
 import type { Language } from '../utils/i18n';
+import { DEFAULTS, type Theme } from '../utils/settings-defaults';
+import { sanitizeSettings } from '../utils/settings-transfer';
 import { browserSyncStorage } from '../utils/storage-adapter';
 
-export type Theme = 'system' | 'light' | 'dark';
-
-const DEFAULT_TYPES: DataTypeId[] = [
-  'cacheStorage',
-  'cache',
-  'indexedDB',
-  'localStorage',
-  'sessionStorage',
-];
-
-export const DEFAULTS = {
-  selectedTypesGlobal: [...DEFAULT_TYPES],
-  selectedTypesSite: [...DEFAULT_TYPES],
-  autoReloadAfterClear: true,
-  linkedOrigins: '',
-  useOriginMappings: true,
-  protectedSites: '',
-  theme: 'system' as Theme,
-  language: 'auto' as Language,
-};
+export type { Theme };
+export { DEFAULTS };
 
 interface SettingsState {
   selectedTypesGlobal: DataTypeId[];
@@ -56,6 +40,10 @@ function toggleIn(
   set({ [field]: current.includes(id) ? current.filter((t) => t !== id) : [...current, id] });
 }
 
+export function mergeSettings(persisted: unknown, current: SettingsState): SettingsState {
+  return { ...current, ...sanitizeSettings(persisted) };
+}
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
@@ -74,6 +62,9 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'cache-cleaner-settings',
       storage: createJSONStorage(() => browserSyncStorage),
+      version: 1,
+      migrate: (persisted) => persisted as SettingsState,
+      merge: mergeSettings,
     },
   ),
 );

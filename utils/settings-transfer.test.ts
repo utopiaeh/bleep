@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULTS } from '../store/settings';
-import { exportSettingsJson, parseImportedSettings } from './settings-transfer';
+import { DEFAULTS } from './settings-defaults';
+import { exportSettingsJson, parseImportedSettings, sanitizeSettings } from './settings-transfer';
 
 describe('exportSettingsJson', () => {
   it('serializes only the known settings fields', () => {
@@ -49,5 +49,20 @@ describe('parseImportedSettings', () => {
 
   it('throws on invalid JSON, same as JSON.parse', () => {
     expect(() => parseImportedSettings('not json')).toThrow();
+  });
+});
+
+describe('sanitizeSettings', () => {
+  it('passes through a valid object unchanged (field-wise)', () => {
+    expect(sanitizeSettings({ ...DEFAULTS, theme: 'dark' })).toEqual({ ...DEFAULTS, theme: 'dark' });
+  });
+
+  it('treats null/undefined as an empty object instead of throwing — the shape a persist store sees on first load', () => {
+    expect(sanitizeSettings(null)).toEqual({});
+    expect(sanitizeSettings(undefined)).toEqual({});
+  });
+
+  it('drops a corrupted field instead of propagating it (e.g. a partial/garbled storage write)', () => {
+    expect(sanitizeSettings({ ...DEFAULTS, theme: 42 })).not.toHaveProperty('theme');
   });
 });
