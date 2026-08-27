@@ -89,6 +89,7 @@ export function OriginMappingsEditor({ value, onChange }: OriginMappingsEditorPr
                 value={row.source}
                 onChange={(e) => updateRow(i, { source: e.target.value })}
                 placeholder={t('linkedOriginSourcePlaceholder')}
+                maxLength={253}
                 className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500"
               />
               {sourceInvalid(row) && (
@@ -107,6 +108,7 @@ export function OriginMappingsEditor({ value, onChange }: OriginMappingsEditorPr
                   if (el) autoResize(el);
                 }}
                 placeholder={t('linkedOriginTargetPlaceholder')}
+                maxLength={2000}
                 rows={1}
                 className="w-full min-w-0 rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500 resize-y overflow-y-auto"
               />

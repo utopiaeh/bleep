@@ -139,7 +139,6 @@ describe('clearLinkedOrigin (Firefox path)', () => {
 
   it('removes the tabs.onUpdated listener even when the tab never reaches "complete" (no leak on timeout)', async () => {
     vi.useFakeTimers();
-    // Override the default mock: never fire the "complete" event for this tab.
     (browser.tabs.create as ReturnType<typeof vi.fn>).mockImplementation(async (props: { url: string }) => ({
       id: nextTabId++,
       url: props.url,

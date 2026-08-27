@@ -9,8 +9,6 @@ import {
   requestOriginPermission,
 } from './clearing';
 
-// fake-browser (wxt/testing) doesn't implement browsingData/cookies/permissions —
-// stub them directly on the shared fake `browser` object per test.
 function stubBrowserApis() {
   Object.assign(browser, {
     browsingData: {

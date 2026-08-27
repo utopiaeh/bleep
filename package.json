@@ -3,7 +3,7 @@
   "description": "Bleep - Clear cache, storage, and browsing data — globally or per-site.",
   "author": "utopiaeh01@gmail.com",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.4.2",
   "type": "module",
   "scripts": {
     "dev": "wxt",

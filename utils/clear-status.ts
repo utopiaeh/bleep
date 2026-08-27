@@ -12,8 +12,6 @@ export function clearAllLabel(
   return t('clearAllCount', { count });
 }
 
-/** clearing → run fn → done/failed → back to idle after a short flash, used by every
- * all-or-nothing clear action (Global clear in both popup and options). */
 export async function runClear(setStatus: (status: ClearStatus) => void, fn: () => Promise<void>): Promise<void> {
   setStatus('clearing');
   try {

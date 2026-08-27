@@ -15,6 +15,7 @@ export function ProtectedSitesSection({ value, onChange }: ProtectedSitesSection
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('protectedSitesPlaceholder')}
+        maxLength={5000}
         rows={2}
         className="w-full rounded-md border border-stone-300 bg-stone-50 dark:border-stone-600 dark:bg-stone-800 px-3 py-1.5 text-sm placeholder:text-stone-500 focus:outline-none focus:border-blue-500 resize-y"
       />

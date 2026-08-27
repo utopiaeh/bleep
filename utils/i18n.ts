@@ -134,6 +134,8 @@ const en = {
   helpFeedbackTitle: 'Feedback',
   helpFeedbackText: 'Found a bug or have a feature request?',
   helpFeedbackLink: 'Open an issue on GitHub',
+  helpReviewText: 'Like Bleep? A review helps others find it.',
+  helpReviewLink: 'Leave a review',
 };
 
 const ru: typeof en = {
@@ -258,6 +260,8 @@ const ru: typeof en = {
   helpFeedbackTitle: 'Обратная связь',
   helpFeedbackText: 'Нашли баг или есть предложение?',
   helpFeedbackLink: 'Открыть issue на GitHub',
+  helpReviewText: 'Нравится Bleep? Отзыв поможет другим найти его.',
+  helpReviewLink: 'Оставить отзыв',
 };
 
 const ro: typeof en = {
@@ -382,6 +386,8 @@ const ro: typeof en = {
   helpFeedbackTitle: 'Feedback',
   helpFeedbackText: 'Ai găsit un bug sau ai o sugestie?',
   helpFeedbackLink: 'Deschide un issue pe GitHub',
+  helpReviewText: 'Îți place Bleep? O recenzie ajută alți utilizatori să-l găsească.',
+  helpReviewLink: 'Lasă o recenzie',
 };
 
 const uk: typeof en = {
@@ -506,6 +512,8 @@ const uk: typeof en = {
   helpFeedbackTitle: 'Зворотний зв’язок',
   helpFeedbackText: 'Знайшли помилку чи маєте пропозицію?',
   helpFeedbackLink: 'Відкрити issue на GitHub',
+  helpReviewText: 'Подобається Bleep? Відгук допоможе іншим його знайти.',
+  helpReviewLink: 'Залишити відгук',
 };
 
 export type TranslationKey = keyof typeof en;
