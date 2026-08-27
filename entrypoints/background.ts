@@ -3,8 +3,16 @@ import { defineBackground } from 'wxt/utils/define-background';
 import { linkedOriginsFor, tabOrigin } from '../utils/clearing';
 import { readPersistedSettingsRaw } from '../utils/storage-adapter';
 
-const BADGE_COLOR = '#2563eb';
 const SETTINGS_KEY = 'cache-cleaner-settings';
+
+const DEFAULT_ICON = { 16: 'icon/16.png', 32: 'icon/32.png', 48: 'icon/48.png', 96: 'icon/96.png', 128: 'icon/128.png' };
+const LINKED_ICON = {
+  16: 'icon/16-linked.png',
+  32: 'icon/32-linked.png',
+  48: 'icon/48-linked.png',
+  96: 'icon/96-linked.png',
+  128: 'icon/128-linked.png',
+};
 
 interface PersistedShape {
   state?: { linkedOrigins?: string; useOriginMappings?: boolean };
@@ -25,29 +33,26 @@ async function getMappingSettings(): Promise<MappingSettings> {
   return cachedSettings;
 }
 
-async function updateBadge(tabId: number, url: string | undefined) {
+async function updateIcon(tabId: number, url: string | undefined) {
   const origin = url ? tabOrigin({ url }) : null;
   if (!origin) {
-    await browser.action.setBadgeText({ tabId, text: '' });
+    await browser.action.setIcon({ tabId, path: DEFAULT_ICON });
     return;
   }
 
   const { linkedOrigins, useOriginMappings } = await getMappingSettings();
   const hasMapping = useOriginMappings && linkedOriginsFor(linkedOrigins, origin).length > 0;
 
-  await browser.action.setBadgeText({ tabId, text: hasMapping ? '●' : '' });
-  if (hasMapping) {
-    await browser.action.setBadgeBackgroundColor({ tabId, color: BADGE_COLOR });
-  }
+  await browser.action.setIcon({ tabId, path: hasMapping ? LINKED_ICON : DEFAULT_ICON });
 }
 
 export default defineBackground(() => {
   browser.tabs.onActivated.addListener(({ tabId }) => {
-    browser.tabs.get(tabId).then((tab) => updateBadge(tabId, tab.url));
+    browser.tabs.get(tabId).then((tab) => updateIcon(tabId, tab.url));
   });
 
   browser.tabs.onUpdated.addListener((tabId, info, tab) => {
-    if (info.status === 'complete') updateBadge(tabId, tab.url);
+    if (info.status === 'complete') updateIcon(tabId, tab.url);
   });
 
   browser.storage.onChanged.addListener((changes, areaName) => {
@@ -56,7 +61,7 @@ export default defineBackground(() => {
     cachedSettings = null;
     browser.tabs.query({ active: true }).then((tabs) => {
       for (const tab of tabs) {
-        if (tab.id != null) updateBadge(tab.id, tab.url);
+        if (tab.id != null) updateIcon(tab.id, tab.url);
       }
     });
   });
