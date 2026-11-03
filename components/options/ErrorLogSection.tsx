@@ -7,7 +7,9 @@ export function ErrorLogSection() {
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400">Error log</h3>
+        <h3 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          Error log
+        </h3>
         {entries.length > 0 && (
           <button
             onClick={clearErrors}
@@ -24,7 +26,9 @@ export function ErrorLogSection() {
           {entries.map((entry) => (
             <li key={entry.id} className="px-3 py-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm text-red-600 dark:text-red-400 truncate">{entry.message}</span>
+                <span className="text-sm text-red-600 dark:text-red-400 truncate">
+                  {entry.message}
+                </span>
                 <span className="text-xs text-stone-500 shrink-0">
                   {new Date(entry.timestamp).toLocaleString()}
                 </span>

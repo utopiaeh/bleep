@@ -27,7 +27,8 @@ Upload: `.output/cache-cleaner-<version>-chrome.zip`.
 
 Store listing needs:
 
-- **Detailed description** (up to 16,000 chars) — expand on the one-line
+- **Detailed description** (up to 16,000 chars) — paste-ready copy in all
+  four languages lives in [STORE_LISTING.md](./STORE_LISTING.md). Expand on the one-line
   manifest description; explain the global-vs-per-site distinction and why
   `browsingData` + `optional_host_permissions` are used.
 - **Icon** — 128×128 (already in `public/icon/128.png`).
@@ -35,8 +36,9 @@ Store listing needs:
   `assets/*.png` or capture fresh ones from `.output/chrome-mv3`.
 - **Category** — Productivity or Tools.
 - **Privacy practices tab** (required for MV3 review):
-  - Justify every permission (`storage`, `tabs`, `browsingData`, `scripting`,
-    `history`, optional `*://*/*`) in the dashboard's permission
+  - Justify every permission (`storage`, `tabs`, `browsingData`, `history`, `contextMenus`,
+    optional `*://*/*`; `scripting` and `cookies` are Firefox-only and not in
+    the Chrome build) in the dashboard's permission
     justification fields — reviewers reject vague justifications.
   - Declare whether user data is collected: **no** — nothing leaves the
     device, no analytics, no remote code.
@@ -64,11 +66,25 @@ Store listing needs:
   markdown).
 - **License** — pick one in the submission flow (or "All Rights Reserved").
 - Firefox's review checks `browser_specific_settings.gecko.id` matches the
-  submission and `strict_min_version` (currently `128.0`) is accurate for
+  submission and `strict_min_version` (currently `140.0`) is accurate for
   the MV3 APIs used.
 
 AMO review is typically automated + fast for extensions with no remote
 code and a clear permission set, which this qualifies for.
+
+## Microsoft Edge Add-ons
+
+Account: [Partner Center](https://partner.microsoft.com/dashboard/microsoftedge/overview)
+(free).
+
+Upload: the same `.output/cache-cleaner-<version>-chrome.zip` as Chrome — no
+separate build needed.
+
+Store listing needs the same assets as Chrome: description (reuse
+[STORE_LISTING.md](./STORE_LISTING.md)), 128×128 logo, screenshots, privacy
+policy URL, and the permission justifications below. Review usually takes a
+few business days. Once live, add an Edge badge next to the Chrome/Firefox
+ones in the README.
 
 ## Privacy policy
 
@@ -88,5 +104,24 @@ https://github.com/utopiaeh/bleep/blob/main/PRIVACY.md
 | `tabs`               | Read the active tab's URL/id to scope a "clear this site" action, and to list open tabs for per-site selection.                                                                                      |
 | `browsingData`       | The core clearing mechanism — cache, cookies, storage, history, etc.                                                                                                                                 |
 | `scripting`          | Firefox-only path: inject a content script into one open tab to clear page-scoped storage APIs that Firefox's `browsingData` can't filter by origin.                                                 |
+| `cookies`            | Firefox-only path: read and delete cookies for the single site being cleared, because Firefox's `browsingData` can't filter cookies by origin.                                                       |
 | `history`            | Let the user view and delete individual history entries, and include History in global clears.                                                                                                       |
+| `contextMenus`       | Add a "Bleep: clear this site" entry to the page and toolbar-icon right-click menus.                                                                                                                 |
 | `*://*/*` (optional) | Requested on-demand, only when the user first performs a per-site clear — needed to target `browsingData.remove({origins})` (Chromium) or inject the content script (Firefox) on that specific site. |
+
+## Store badges
+
+Neither badge can be bought or applied for directly — these keep Bleep eligible.
+
+- **Firefox "Recommended"** — editorially selected by Mozilla; watch
+  [Extension Workshop](https://extensionworkshop.com/documentation/publish/recommended-extensions/)
+  for nomination rounds. Once recommended, every update gets a manual code
+  review, so keep the source zip reproducible (`yarn zip:firefox`) and the
+  permission set minimal.
+- **Chrome "Featured"** — request it via the Chrome Web Store One Stop
+  Support form ("Featured badge nomination") after the listing is polished.
+- Both reward: minimal permissions with clear justifications (table above),
+  no remote code or data collection, a localized listing (`public/_locales`
+  covers name/description; paste the per-language long description in each
+  dashboard), up-to-date screenshots from `assets/`, a privacy policy link,
+  regular releases, and good ratings.

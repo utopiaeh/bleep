@@ -10,8 +10,10 @@ import { GlobalSection } from '../../components/options/GlobalSection';
 import { LanguageSection } from '../../components/options/LanguageSection';
 import { ProtectedSitesSection } from '../../components/options/ProtectedSitesSection';
 import { SettingsHeader, type OptionsTab } from '../../components/options/SettingsHeader';
+import { ShortcutsSection } from '../../components/options/ShortcutsSection';
 import { SiteTabsSection } from '../../components/options/SiteTabsSection';
 import { ThemeSection } from '../../components/options/ThemeSection';
+import { WelcomeBanner } from '../../components/options/WelcomeBanner';
 import { VisitedSitesSection } from '../../components/options/VisitedSitesSection';
 import { SectionHeading } from '../../components/SectionHeading';
 import { type ClearStatus } from '../../components/StatusButton';
@@ -26,11 +28,13 @@ import { runClear } from '../../utils/clear-status';
 import {
   clearGlobal,
   clearLinkedOrigin,
-  clearTab,
+  clearMappedTargets,
+  clearSiteWithLinked,
   clearTabData,
   dedupeSitesByHostname,
   filterProtectedTargets,
   isProtectedSite,
+  protectedExcludeOrigins,
   linkedOriginsFor,
   requestOriginPermission,
   siteScopedIds,
@@ -51,12 +55,15 @@ const VISITED_CLEAR_CONCURRENCY = 3;
 export default function App() {
   useTheme();
   const t = useTranslation();
-  const [activeTab, setActiveTab] = useState<OptionsTab>('perSite');
+  const [showWelcome, setShowWelcome] = useState(() => location.hash === '#welcome');
+  const [activeTab, setActiveTab] = useState<OptionsTab>(showWelcome ? 'help' : 'perSite');
   const {
     selectedTypesGlobal,
     selectedTypesSite,
     toggleTypeGlobal,
     toggleTypeSite,
+    setTypesGlobal,
+    setTypesSite,
     autoReloadAfterClear,
     setAutoReloadAfterClear,
     linkedOrigins,
@@ -105,6 +112,8 @@ export default function App() {
     browser.history.search({ text: '', maxResults: 1000 }).then(setVisitedHistory);
   }, []);
 
+  const siteClearOptions = { useOriginMappings, linkedOrigins, protectedSites };
+
   const filteredTabs = useMemo(() => {
     const q = siteFilter.trim().toLowerCase();
     return tabs.filter((tab) => {
@@ -116,9 +125,11 @@ export default function App() {
 
   const filteredHistory = useMemo(() => {
     const q = historyFilter.trim().toLowerCase();
-    if (!q) return history;
-    return history.filter((item) => (item.title ?? item.url ?? '').toLowerCase().includes(q));
-  }, [history, historyFilter]);
+    return history.filter((item) => {
+      if (isProtectedSite(protectedSites, tabHostname(item) ?? '')) return false;
+      return !q || (item.title ?? item.url ?? '').toLowerCase().includes(q);
+    });
+  }, [history, historyFilter, protectedSites]);
 
   const allVisitedSites = useMemo(
     () => dedupeSitesByHostname(visitedHistory.map((item) => item.url)),
@@ -128,7 +139,8 @@ export default function App() {
   const visitedSites = useMemo(
     () =>
       allVisitedSites.filter(
-        (site) => !clearedHostnames.has(site.hostname) && !isProtectedSite(protectedSites, site.hostname),
+        (site) =>
+          !clearedHostnames.has(site.hostname) && !isProtectedSite(protectedSites, site.hostname),
       ),
     [allVisitedSites, clearedHostnames, protectedSites],
   );
@@ -140,11 +152,8 @@ export default function App() {
   }, [visitedSites, visitedSiteFilter]);
 
   async function handleGlobalClear() {
-    const excludeOrigins = allVisitedSites
-      .filter((site) => isProtectedSite(protectedSites, site.hostname))
-      .map((site) => site.origin);
     await runClear(setGlobalStatus, async () => {
-      await clearGlobal(selectedTypesGlobal, excludeOrigins);
+      await clearGlobal(selectedTypesGlobal, await protectedExcludeOrigins(protectedSites));
       recordClear('(global)', selectedTypesGlobal);
     });
   }
@@ -157,18 +166,11 @@ export default function App() {
     setFailedTabIds((s) => withoutItem(s, tabId));
     try {
       const ids = siteScopedIds(selectedTypesSite);
-      const ok = await clearTab(tab, ids);
-      if (!ok) setFailedTabIds((s) => withItem(s, tabId));
+      const granted = await requestOriginPermission();
+      const linkedTargets = granted ? await clearSiteWithLinked(tab, ids, siteClearOptions) : null;
+      if (!linkedTargets) setFailedTabIds((s) => withItem(s, tabId));
       else {
-        const origin = tabOrigin(tab);
-        let linkedTargets: string[] = [];
-        if (useOriginMappings && origin) {
-          linkedTargets = filterProtectedTargets(linkedOriginsFor(linkedOrigins, origin), protectedSites);
-          await Promise.all(
-            linkedTargets.map((target) => clearLinkedOrigin(target, ids, tabCookieStoreId(tab))),
-          );
-        }
-        recordClear(tabHostname(tab) ?? origin ?? tab.url ?? '?', ids, linkedTargets);
+        recordClear(tabHostname(tab) ?? tab.url ?? '?', ids, linkedTargets);
         if (autoReloadAfterClear) {
           markReloading(tabId);
           browser.tabs.reload(tabId, { bypassCache: true });
@@ -195,7 +197,7 @@ export default function App() {
       const ids = siteScopedIds(selectedTypesSite);
       setBusyTabIds(new Set(targets.map((t) => t.id!)));
       const results = await Promise.allSettled(
-        targets.map((tab) => clearTabData(tab, ids).then((ok) => ({ tab, ok }))),
+        targets.map((tab) => clearTabData(tab, ids, protectedSites).then((ok) => ({ tab, ok }))),
       );
       const failed = new Set<number>();
       const clearedTabIds: number[] = [];
@@ -214,12 +216,15 @@ export default function App() {
         const origin = tabOrigin(tab);
         if (!origin) continue;
         const storeId = tabCookieStoreId(tab);
-        for (const target of filterProtectedTargets(linkedOriginsFor(linkedOrigins, origin), protectedSites)) {
+        for (const target of filterProtectedTargets(
+          linkedOriginsFor(linkedOrigins, origin),
+          protectedSites,
+        )) {
           const key = `${storeId ?? ''}||${target}`;
           if (seenLinkedClears.has(key)) continue;
           seenLinkedClears.add(key);
           allLinkedTargets.push(target);
-          linkedTasks.push(clearLinkedOrigin(target, ids, storeId));
+          linkedTasks.push(clearLinkedOrigin(target, ids, protectedSites, storeId));
         }
       }
       await Promise.all(linkedTasks);
@@ -244,21 +249,14 @@ export default function App() {
 
   async function clearVisitedSite(site: VisitedSite): Promise<string[]> {
     const ids = siteScopedIds(selectedTypesSite);
-    const openTab = (await browser.tabs.query({})).find((tab) => tabHostname(tab) === site.hostname);
-    const cookieStoreId = openTab ? tabCookieStoreId(openTab) : undefined;
+    const openTab = (await browser.tabs.query({})).find(
+      (tab) => tabHostname(tab) === site.hostname,
+    );
 
-    if (openTab?.id != null) {
-      await clearTabData(openTab, ids);
-    } else {
-      await clearLinkedOrigin(site.origin, ids);
-    }
-
-    let linkedTargets: string[] = [];
-    if (useOriginMappings) {
-      linkedTargets = filterProtectedTargets(linkedOriginsFor(linkedOrigins, site.origin), protectedSites);
-      await Promise.all(linkedTargets.map((target) => clearLinkedOrigin(target, ids, cookieStoreId)));
-    }
-    return linkedTargets;
+    if (openTab?.id != null)
+      return (await clearSiteWithLinked(openTab, ids, siteClearOptions)) ?? [];
+    await clearLinkedOrigin(site.origin, ids, protectedSites);
+    return clearMappedTargets(site.origin, ids, siteClearOptions);
   }
 
   async function handleClearVisitedSite(site: VisitedSite) {
@@ -367,12 +365,24 @@ export default function App() {
         {storageError && (
           <div className="flex items-center justify-between gap-3 mb-4 rounded-md border border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950 px-3 py-2 text-sm text-red-700 dark:text-red-300">
             <span>{storageError}</span>
-            <button type="button" onClick={clearStorageError} className="shrink-0 cursor-pointer underline">
+            <button
+              type="button"
+              onClick={clearStorageError}
+              className="shrink-0 cursor-pointer underline"
+            >
               {t('remove')}
             </button>
           </div>
         )}
 
+        {showWelcome && (
+          <WelcomeBanner
+            onDismiss={() => {
+              setShowWelcome(false);
+              window.history.replaceState(null, '', location.pathname);
+            }}
+          />
+        )}
         <SettingsHeader activeTab={activeTab} onTabChange={setActiveTab} onReset={resetSettings} />
 
         {activeTab === 'general' && (
@@ -391,6 +401,7 @@ export default function App() {
           <GlobalSection
             selectedTypes={selectedTypesGlobal}
             onToggleType={toggleTypeGlobal}
+            onSetTypes={setTypesGlobal}
             status={globalStatus}
             onClear={handleGlobalClear}
             showHistory={selectedTypesGlobal.includes('history')}
@@ -407,7 +418,13 @@ export default function App() {
         {activeTab === 'perSite' && (
           <section className="mb-8">
             <SectionHeading title={t('scopePerSite')} description={t('scopePerSiteDescription')} />
-            <DataTypeGrid types={SITE_TYPES} selected={selectedTypesSite} onToggle={toggleTypeSite} className="mb-3" />
+            <DataTypeGrid
+              types={SITE_TYPES}
+              selected={selectedTypesSite}
+              onToggle={toggleTypeSite}
+              onSetAll={setTypesSite}
+              className="mb-3"
+            />
 
             <hr className="border-stone-200 dark:border-stone-700 mb-3" />
 
@@ -470,6 +487,8 @@ export default function App() {
             />
           </section>
         )}
+
+        {activeTab === 'shortcuts' && <ShortcutsSection />}
 
         {activeTab === 'help' && <HelpPanel />}
       </div>

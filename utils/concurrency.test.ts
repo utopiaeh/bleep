@@ -4,7 +4,11 @@ import { mapWithConcurrency } from './concurrency';
 describe('mapWithConcurrency', () => {
   it('returns results in the original order regardless of completion order', async () => {
     const items = [30, 10, 20];
-    const result = await mapWithConcurrency(items, 3, (ms) => new Promise((r) => setTimeout(() => r(ms), ms)));
+    const result = await mapWithConcurrency(
+      items,
+      3,
+      (ms) => new Promise((r) => setTimeout(() => r(ms), ms)),
+    );
     expect(result).toEqual([30, 10, 20]);
   });
 

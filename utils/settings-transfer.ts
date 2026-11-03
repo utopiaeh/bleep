@@ -36,6 +36,10 @@ export function sanitizeSettings(value: unknown): Partial<ExportableSettings> {
   return result;
 }
 
+export function withDefaults(value: unknown): ExportableSettings {
+  return { ...DEFAULTS, ...sanitizeSettings(value) };
+}
+
 export function parseImportedSettings(json: string): Partial<ExportableSettings> {
   return sanitizeSettings(JSON.parse(json));
 }

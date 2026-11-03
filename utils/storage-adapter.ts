@@ -5,7 +5,10 @@ import { useStorageErrorStore } from '../store/storageError';
 
 const CHUNK_SIZE = 6000;
 
-async function readChunked(area: Browser.storage.StorageArea, name: string): Promise<string | null> {
+async function readChunked(
+  area: Browser.storage.StorageArea,
+  name: string,
+): Promise<string | null> {
   const lenKey = `${name}__len`;
   const meta = await area.get(lenKey);
   const len = meta[lenKey] as number | undefined;
@@ -15,7 +18,11 @@ async function readChunked(area: Browser.storage.StorageArea, name: string): Pro
   return keys.map((k) => (result[k] as string | undefined) ?? '').join('');
 }
 
-async function writeChunked(area: Browser.storage.StorageArea, name: string, value: string): Promise<void> {
+async function writeChunked(
+  area: Browser.storage.StorageArea,
+  name: string,
+  value: string,
+): Promise<void> {
   const lenKey = `${name}__len`;
   const meta = await area.get(lenKey);
   const oldLen = (meta[lenKey] as number | undefined) ?? 0;
@@ -29,7 +36,10 @@ async function writeChunked(area: Browser.storage.StorageArea, name: string, val
   await area.set(payload);
 
   if (oldLen > chunks.length) {
-    const staleKeys = Array.from({ length: oldLen - chunks.length }, (_, i) => `${name}__${chunks.length + i}`);
+    const staleKeys = Array.from(
+      { length: oldLen - chunks.length },
+      (_, i) => `${name}__${chunks.length + i}`,
+    );
     await area.remove(staleKeys);
   }
 }

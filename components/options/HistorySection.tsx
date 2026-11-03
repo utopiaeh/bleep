@@ -15,13 +15,24 @@ interface HistorySectionProps {
   onDelete: (url: string) => void;
 }
 
-export function HistorySection({ items, filter, onFilterChange, status, onClearAll, onDelete }: HistorySectionProps) {
+export function HistorySection({
+  items,
+  filter,
+  onFilterChange,
+  status,
+  onClearAll,
+  onDelete,
+}: HistorySectionProps) {
   const t = useTranslation();
 
   return (
     <div className="mt-4">
       <SectionHeading as="h3" title={t('recentHistory')} />
-      <FilterRow value={filter} onChange={onFilterChange} placeholder={t('filterHistoryPlaceholder')}>
+      <FilterRow
+        value={filter}
+        onChange={onFilterChange}
+        placeholder={t('filterHistoryPlaceholder')}
+      >
         <button
           onClick={onClearAll}
           disabled={status === 'clearing' || items.length === 0}

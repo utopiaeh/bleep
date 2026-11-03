@@ -1,12 +1,13 @@
 import { useTranslation } from '../../hooks/useTranslation';
 import type { TranslationKey } from '../../utils/i18n';
 
-export type OptionsTab = 'general' | 'global' | 'perSite' | 'help';
+export type OptionsTab = 'general' | 'global' | 'perSite' | 'shortcuts' | 'help';
 
 const TAB_LABELS: Record<OptionsTab, TranslationKey> = {
   general: 'tabGeneral',
   global: 'scopeGlobal',
   perSite: 'scopePerSite',
+  shortcuts: 'tabShortcuts',
   help: 'tabHelp',
 };
 
@@ -22,7 +23,7 @@ export function SettingsHeader({ activeTab, onTabChange, onReset }: SettingsHead
   return (
     <div className="flex items-center justify-between mb-6 border-b border-stone-200 dark:border-stone-700">
       <div className="flex gap-4">
-        {(['perSite', 'global', 'general', 'help'] as const).map((tab) => (
+        {(['perSite', 'global', 'general', 'shortcuts', 'help'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => onTabChange(tab)}

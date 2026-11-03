@@ -37,14 +37,15 @@ const en = {
   failedOrDenied: 'Failed / denied',
   activeTabHint: 'Only the site open in this tab is affected.',
   protectedSiteLabel: 'Protected site',
-  protectedSiteHint: 'This site is on your protected list (Settings → Per Site) and can\'t be cleared from here.',
+  protectedSiteHint:
+    "This site is on your protected list (Settings → Per Site) and can't be cleared from here.",
   clearAllSites: 'Clear all sites',
   yesClearEverything: 'Yes, clear everything',
   yesClearAllVisited: 'Yes, clear these',
   allSitesHint: 'Applies to every site, not just this tab.',
   settings: 'Settings',
 
-  settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Settings',
+  settingsTitle: 'Bleep - Global & Tab Cache Cleaner — Settings',
   tabGeneral: 'General',
   tabHelp: 'Help',
   resetToDefaults: 'Reset to defaults',
@@ -96,14 +97,16 @@ const en = {
   protectedSites: 'Protected sites',
   protectedSitesPlaceholder: 'One hostname per line, e.g. app.your-company.com',
   protectedSitesHint:
-    "Never cleared by any per-site action (tabs, visited sites, or as a mapped origin target) — a source also protects its subdomains. Doesn't apply to Global's \"Clear all sites\", which has no way to exclude specific sites.",
+    'Bleep never clears them from a per-site clear (tabs, visited sites, mapped targets) or from embedded frames, and cookies of other sites under the same parent domain are kept. On Chrome, "Clear all sites" skips them too, but their subdomains only if they appear in your history.',
+  cookiesKeptHint: "Cookies are kept: a protected site shares this site's parent domain.",
   protectedSitesGlobalNoteChrome:
-    "Protected sites you've visited before are excluded here — but only ones already in your history; an unvisited protected site can't be excluded from Global clear.",
+    "Protected sites are excluded here; their subdomains only if they appear in your history. While any site is protected, History, Downloads and Form Data aren't cleared.",
   protectedSitesGlobalNoteFirefox:
     "Protected sites list doesn't apply here — {browser} has no way to exclude specific sites, so Global clear always clears everything.",
 
   backupTitle: 'Backup',
-  backupHint: 'Export your settings (including origin mappings) to a file, or import one on another machine.',
+  backupHint:
+    'Export your settings (including origin mappings) to a file, or import one on another machine.',
   exportSettings: 'Export settings',
   importSettings: 'Import settings',
   importInvalidFile: "That file couldn't be read as Bleep settings.",
@@ -131,10 +134,28 @@ const en = {
   helpMappingsTitle: 'Origin mappings',
   helpMappingsText:
     "Some apps silently sign you back in through a separate auth/SSO domain your storage clear never touches. Map that domain in Per Site settings (site => also-clear-this) so it's cleared too — only when clearing the exact site on the left.",
+  tabShortcuts: 'Shortcuts',
+  shortcutsTitle: 'Keyboard shortcuts',
+  shortcutsText:
+    "No shortcuts are set by default. Pick your own keys in the browser's extension shortcut settings.",
+  shortcutClearSite: 'Clear the current site (Per Site settings)',
+  shortcutOpenPopup: 'Open the Bleep popup',
+  shortcutsChange: 'Change shortcuts',
+  shortcutsManualHint: "Couldn't open it automatically. Go to {path}.",
+  shortcutNotSet: '(no key set)',
+  welcomeTitle: 'Welcome to Bleep 👋',
+  welcomeText:
+    'Bleep is ready. Click the toolbar icon to clear the site you are on, or everything at once. Add sites you never want cleared under Per Site → Protected sites. More tips below.',
+  welcomeDismiss: 'Got it',
   helpFeedbackTitle: 'Feedback',
   helpFeedbackText: 'Found a bug or have a feature request?',
   helpFeedbackLink: 'Open an issue on GitHub',
   helpReviewText: 'Like Bleep? A review helps others find it.',
+  presetsLabel: 'Presets',
+  presetDefault: 'Default',
+  presetDev: 'Dev',
+  presetEverything: 'Everything',
+  githubRepoLink: 'Bleep on GitHub',
   helpReviewLink: 'Leave a review',
 };
 
@@ -163,14 +184,15 @@ const ru: typeof en = {
   activeTabHint:
     'Затрагивает только сайт, открытый в этой вкладке. При первом использовании запросит разрешение.',
   protectedSiteLabel: 'Защищённый сайт',
-  protectedSiteHint: 'Этот сайт в списке защищённых (Настройки → Для сайта) и не может быть очищен отсюда.',
+  protectedSiteHint:
+    'Этот сайт в списке защищённых (Настройки → Для сайта) и не может быть очищен отсюда.',
   clearAllSites: 'Очистить все сайты',
   yesClearEverything: 'Да, очистить всё',
   yesClearAllVisited: 'Да, очистить эти',
   allSitesHint: 'Применяется ко всем сайтам, не только к этой вкладке.',
   settings: 'Настройки',
 
-  settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Настройки',
+  settingsTitle: 'Bleep - Global & Tab Cache Cleaner — Настройки',
   tabGeneral: 'Общие',
   tabHelp: 'Справка',
   resetToDefaults: 'Сбросить настройки',
@@ -222,14 +244,16 @@ const ru: typeof en = {
   protectedSites: 'Защищённые сайты',
   protectedSitesPlaceholder: 'По одному домену на строку, напр. app.your-company.com',
   protectedSitesHint:
-    'Никогда не очищаются никакими действиями для сайта (вкладки, посещённые сайты или как связанный целевой домен) — источник также защищает свои поддомены. Не действует для «Очистить все сайты» в разделе «Глобально» — там нет способа исключить отдельные сайты.',
+    'Bleep никогда не очищает их при очистке для сайта (вкладки, посещённые сайты, связанные домены) и во встроенных фреймах, а cookie других сайтов с тем же родительским доменом сохраняются. В Chrome «Очистить все сайты» тоже их пропускает, но поддомены — только если они есть в истории.',
+  cookiesKeptHint: 'Cookie сохранены: у защищённого сайта тот же родительский домен.',
   protectedSitesGlobalNoteChrome:
-    'Здесь исключаются защищённые сайты, которые вы уже посещали — но только те, что есть в истории; непосещённый защищённый сайт нельзя исключить из глобальной очистки.',
+    'Защищённые сайты здесь исключаются, их поддомены — только если они есть в истории. Пока есть защищённые сайты, история, загрузки и данные форм не очищаются.',
   protectedSitesGlobalNoteFirefox:
     'Список защищённых сайтов здесь не действует — в {browser} нет способа исключить отдельные сайты, поэтому глобальная очистка всегда очищает всё.',
 
   backupTitle: 'Резервная копия',
-  backupHint: 'Экспортируйте настройки (включая сопоставления источников) в файл или импортируйте их на другом устройстве.',
+  backupHint:
+    'Экспортируйте настройки (включая сопоставления источников) в файл или импортируйте их на другом устройстве.',
   exportSettings: 'Экспортировать настройки',
   importSettings: 'Импортировать настройки',
   importInvalidFile: 'Не удалось прочитать этот файл как настройки Bleep.',
@@ -257,10 +281,28 @@ const ru: typeof en = {
   helpMappingsTitle: 'Сопоставления источников',
   helpMappingsText:
     'Некоторые приложения незаметно снова входят в аккаунт через отдельный домен авторизации/SSO, который очистка хранилища не затрагивает. Укажите этот домен в настройках «Для сайта» (сайт => тоже очистить это), чтобы он тоже очищался — только при очистке именно указанного слева сайта.',
+  tabShortcuts: 'Клавиши',
+  shortcutsTitle: 'Сочетания клавиш',
+  shortcutsText:
+    'По умолчанию сочетания не назначены. Выберите свои клавиши в настройках сочетаний клавиш расширений браузера.',
+  shortcutClearSite: 'Очистить текущий сайт (настройки «Для сайта»)',
+  shortcutOpenPopup: 'Открыть окно Bleep',
+  shortcutsChange: 'Изменить сочетания',
+  shortcutsManualHint: 'Не удалось открыть автоматически. Откройте {path}.',
+  shortcutNotSet: '(не назначено)',
+  welcomeTitle: 'Добро пожаловать в Bleep 👋',
+  welcomeText:
+    'Bleep готов. Нажмите на иконку на панели, чтобы очистить текущий сайт или всё сразу. Сайты, которые нельзя очищать, добавьте в «Для сайта» → «Защищённые сайты». Подсказки — ниже.',
+  welcomeDismiss: 'Понятно',
   helpFeedbackTitle: 'Обратная связь',
   helpFeedbackText: 'Нашли баг или есть предложение?',
   helpFeedbackLink: 'Открыть issue на GitHub',
   helpReviewText: 'Нравится Bleep? Отзыв поможет другим найти его.',
+  presetsLabel: 'Пресеты',
+  presetDefault: 'По умолчанию',
+  presetDev: 'Разработка',
+  presetEverything: 'Всё',
+  githubRepoLink: 'Bleep на GitHub',
   helpReviewLink: 'Оставить отзыв',
 };
 
@@ -289,14 +331,15 @@ const ro: typeof en = {
   activeTabHint:
     'Afectează doar site-ul deschis în această filă. Va cere permisiune o singură dată la prima utilizare.',
   protectedSiteLabel: 'Site protejat',
-  protectedSiteHint: 'Acest site e în lista de site-uri protejate (Setări → Per site) și nu poate fi șters de aici.',
+  protectedSiteHint:
+    'Acest site e în lista de site-uri protejate (Setări → Per site) și nu poate fi șters de aici.',
   clearAllSites: 'Șterge toate site-urile',
   yesClearEverything: 'Da, șterge totul',
   yesClearAllVisited: 'Da, șterge acestea',
   allSitesHint: 'Se aplică pentru toate site-urile, nu doar pentru această filă.',
   settings: 'Setări',
 
-  settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Setări',
+  settingsTitle: 'Bleep - Global & Tab Cache Cleaner — Setări',
   tabGeneral: 'General',
   tabHelp: 'Ajutor',
   resetToDefaults: 'Resetează la valorile implicite',
@@ -348,14 +391,16 @@ const ro: typeof en = {
   protectedSites: 'Site-uri protejate',
   protectedSitesPlaceholder: 'Câte un domeniu pe linie, ex. app.compania-ta.com',
   protectedSitesHint:
-    'Nu sunt șterse niciodată de nicio acțiune per site (file, site-uri vizitate sau ca țintă de corespondență) — o sursă protejează și subdomeniile ei. Nu se aplică la „Șterge toate site-urile” din Global, care nu poate exclude anumite site-uri.',
+    'Bleep nu le șterge niciodată la curățarea per site (file, site-uri vizitate, ținte de corespondență) sau din cadrele încorporate, iar cookie-urile altor site-uri cu același domeniu părinte sunt păstrate. În Chrome, „Șterge toate site-urile” le sare și pe ele, dar subdomeniile doar dacă apar în istoric.',
+  cookiesKeptHint: 'Cookie-urile sunt păstrate: un site protejat are același domeniu părinte.',
   protectedSitesGlobalNoteChrome:
-    'Site-urile protejate pe care le-ai vizitat deja sunt excluse aici — dar doar cele din istoric; un site protejat nevizitat nu poate fi exclus din ștergerea globală.',
+    'Site-urile protejate sunt excluse aici; subdomeniile lor doar dacă apar în istoric. Cât timp există site-uri protejate, istoricul, descărcările și datele din formulare nu sunt șterse.',
   protectedSitesGlobalNoteFirefox:
     'Lista de site-uri protejate nu se aplică aici — {browser} nu poate exclude anumite site-uri, așa că ștergerea globală șterge întotdeauna totul.',
 
   backupTitle: 'Backup',
-  backupHint: 'Exportă setările (inclusiv corespondențele de origini) într-un fișier sau importă-le pe alt dispozitiv.',
+  backupHint:
+    'Exportă setările (inclusiv corespondențele de origini) într-un fișier sau importă-le pe alt dispozitiv.',
   exportSettings: 'Exportă setările',
   importSettings: 'Importă setările',
   importInvalidFile: 'Acest fișier nu a putut fi citit ca setări Bleep.',
@@ -383,10 +428,28 @@ const ro: typeof en = {
   helpMappingsTitle: 'Corespondențe de origini',
   helpMappingsText:
     'Unele aplicații te autentifică din nou, discret, printr-un domeniu separat de autentificare/SSO pe care ștergerea stocării nu îl atinge. Adaugă acel domeniu în setările „Per site” (site => șterge și acesta) ca să fie șters și el — doar la ștergerea exactă a site-ului din stânga.',
+  tabShortcuts: 'Comenzi rapide',
+  shortcutsTitle: 'Comenzi rapide de la tastatură',
+  shortcutsText:
+    'Implicit nu este setată nicio comandă rapidă. Alege tastele în setările de comenzi rapide pentru extensii ale browserului.',
+  shortcutClearSite: 'Curăță site-ul curent (setări Per site)',
+  shortcutOpenPopup: 'Deschide popup-ul Bleep',
+  shortcutsChange: 'Schimbă comenzile rapide',
+  shortcutsManualHint: 'Nu s-a putut deschide automat. Mergi la {path}.',
+  shortcutNotSet: '(nicio tastă setată)',
+  welcomeTitle: 'Bun venit în Bleep 👋',
+  welcomeText:
+    'Bleep este gata. Apasă pe pictograma din bară pentru a curăța site-ul curent sau totul deodată. Adaugă site-urile care nu trebuie curățate în Per site → Site-uri protejate. Mai multe sfaturi mai jos.',
+  welcomeDismiss: 'Am înțeles',
   helpFeedbackTitle: 'Feedback',
   helpFeedbackText: 'Ai găsit un bug sau ai o sugestie?',
   helpFeedbackLink: 'Deschide un issue pe GitHub',
   helpReviewText: 'Îți place Bleep? O recenzie ajută alți utilizatori să-l găsească.',
+  presetsLabel: 'Presetări',
+  presetDefault: 'Implicit',
+  presetDev: 'Dezvoltare',
+  presetEverything: 'Tot',
+  githubRepoLink: 'Bleep pe GitHub',
   helpReviewLink: 'Lasă o recenzie',
 };
 
@@ -415,14 +478,15 @@ const uk: typeof en = {
   activeTabHint:
     'Стосується лише сайту, відкритого в цій вкладці. При першому використанні запитає дозвіл.',
   protectedSiteLabel: 'Захищений сайт',
-  protectedSiteHint: 'Цей сайт у списку захищених (Налаштування → Для сайту) і не може бути очищений звідси.',
+  protectedSiteHint:
+    'Цей сайт у списку захищених (Налаштування → Для сайту) і не може бути очищений звідси.',
   clearAllSites: 'Очистити всі сайти',
   yesClearEverything: 'Так, очистити все',
   yesClearAllVisited: 'Так, очистити ці',
   allSitesHint: 'Застосовується до всіх сайтів, не лише до цієї вкладки.',
   settings: 'Налаштування',
 
-  settingsTitle: 'Bleep - Fast Global & Tab Cache Cleaner — Налаштування',
+  settingsTitle: 'Bleep - Global & Tab Cache Cleaner — Налаштування',
   tabGeneral: 'Загальні',
   tabHelp: 'Довідка',
   resetToDefaults: 'Скинути налаштування',
@@ -437,14 +501,14 @@ const uk: typeof en = {
   languageRomanian: 'Румунська',
   languageUkrainian: 'Українська',
   reloadTabAfterClearingPerSite: 'Жорстко оновити вкладку після очищення (лише для сайту)',
-  useOriginMappings: "Використовувати зіставлення джерел",
-  linkedOrigin: "Зіставлення джерел (теж очищаються при очищенні відповідного сайту)",
+  useOriginMappings: 'Використовувати зіставлення джерел',
+  linkedOrigin: 'Зіставлення джерел (теж очищаються при очищенні відповідного сайту)',
   linkedOriginSourcePlaceholder: 'https://your-app.com',
   linkedOriginTargetPlaceholder: 'https://auth.your-app.com',
   addMapping: '+ Додати зіставлення',
   linkedOriginInvalidHint: 'Це не схоже на дійсний домен',
   linkedOriginHint:
-    "Декілька цілей справа можна вказати через кому. Протокол і шлях неважливі з обох боків, а джерело охоплює й свої піддомени (domain.com збігається і з sso.domain.com). Сайти без зіставлення не зачіпаються.",
+    'Декілька цілей справа можна вказати через кому. Протокол і шлях неважливі з обох боків, а джерело охоплює й свої піддомени (domain.com збігається і з sso.domain.com). Сайти без зіставлення не зачіпаються.',
   storageKeyShareNote:
     'Локальне сховище та сховище сесії використовують один і той самий API браузера в глобальному режимі — позначення будь-якого з них очищає обидва.',
   scopeGlobal: 'Глобально',
@@ -474,14 +538,16 @@ const uk: typeof en = {
   protectedSites: 'Захищені сайти',
   protectedSitesPlaceholder: 'По одному домену на рядок, напр. app.your-company.com',
   protectedSitesHint:
-    'Ніколи не очищаються жодною дією для сайту (вкладки, відвідані сайти або як зіставлена ціль) — джерело також захищає свої піддомени. Не діє для «Очистити всі сайти» у Глобальному розділі — там немає способу виключити окремі сайти.',
+    'Bleep ніколи не очищає їх під час очищення для сайту (вкладки, відвідані сайти, зіставлені цілі) та у вбудованих фреймах, а cookie інших сайтів з тим самим батьківським доменом зберігаються. У Chrome «Очистити всі сайти» теж їх пропускає, але піддомени — лише якщо вони є в історії.',
+  cookiesKeptHint: 'Cookie збережено: захищений сайт має той самий батьківський домен.',
   protectedSitesGlobalNoteChrome:
-    'Захищені сайти, які ви вже відвідували, виключаються тут — але лише ті, що є в історії; невідвіданий захищений сайт не можна виключити з глобального очищення.',
+    'Захищені сайти тут виключаються, їхні піддомени — лише якщо вони є в історії. Поки є захищені сайти, історія, завантаження та дані форм не очищаються.',
   protectedSitesGlobalNoteFirefox:
     'Список захищених сайтів тут не діє — у {browser} немає способу виключити окремі сайти, тому глобальне очищення завжди очищає все.',
 
   backupTitle: 'Резервна копія',
-  backupHint: 'Експортуйте налаштування (включно зі зіставленнями джерел) у файл або імпортуйте їх на іншому пристрої.',
+  backupHint:
+    'Експортуйте налаштування (включно зі зіставленнями джерел) у файл або імпортуйте їх на іншому пристрої.',
   exportSettings: 'Експортувати налаштування',
   importSettings: 'Імпортувати налаштування',
   importInvalidFile: 'Не вдалося прочитати цей файл як налаштування Bleep.',
@@ -508,11 +574,29 @@ const uk: typeof en = {
     'Після очищення вкладка оновлюється без старих файлів кешу — одразу видно свіжу версію сайту.',
   helpMappingsTitle: 'Зіставлення джерел',
   helpMappingsText:
-    "Деякі застосунки непомітно повторно авторизують вас через окремий домен авторизації/SSO, якого очищення сховища не торкається. Додайте цей домен у налаштуваннях «Для сайту» (сайт => теж очистити це), щоб він теж очищався — лише при очищенні саме вказаного зліва сайту.",
+    'Деякі застосунки непомітно повторно авторизують вас через окремий домен авторизації/SSO, якого очищення сховища не торкається. Додайте цей домен у налаштуваннях «Для сайту» (сайт => теж очистити це), щоб він теж очищався — лише при очищенні саме вказаного зліва сайту.',
+  tabShortcuts: 'Клавіші',
+  shortcutsTitle: 'Сполучення клавіш',
+  shortcutsText:
+    'Типово сполучення не призначені. Оберіть свої клавіші в налаштуваннях сполучень клавіш розширень браузера.',
+  shortcutClearSite: 'Очистити поточний сайт (налаштування «Для сайту»)',
+  shortcutOpenPopup: 'Відкрити вікно Bleep',
+  shortcutsChange: 'Змінити сполучення',
+  shortcutsManualHint: 'Не вдалося відкрити автоматично. Відкрийте {path}.',
+  shortcutNotSet: '(не призначено)',
+  welcomeTitle: 'Ласкаво просимо до Bleep 👋',
+  welcomeText:
+    'Bleep готовий. Натисніть іконку на панелі, щоб очистити поточний сайт або все одразу. Сайти, які не можна очищати, додайте в «Для сайту» → «Захищені сайти». Більше порад — нижче.',
+  welcomeDismiss: 'Зрозуміло',
   helpFeedbackTitle: 'Зворотний зв’язок',
   helpFeedbackText: 'Знайшли помилку чи маєте пропозицію?',
   helpFeedbackLink: 'Відкрити issue на GitHub',
   helpReviewText: 'Подобається Bleep? Відгук допоможе іншим його знайти.',
+  presetsLabel: 'Пресети',
+  presetDefault: 'Типово',
+  presetDev: 'Розробка',
+  presetEverything: 'Усе',
+  githubRepoLink: 'Bleep на GitHub',
   helpReviewLink: 'Залишити відгук',
 };
 

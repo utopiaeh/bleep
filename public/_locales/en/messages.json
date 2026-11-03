@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "Bleep - Global & Tab Cache Cleaner"
+  },
+  "extDescription": {
+    "message": "Full control over your browsing data — clear cache, cookies, storage, service workers, and history globally or per site."
+  },
+  "cmdClearSite": {
+    "message": "Clear the current site (Per Site settings)"
+  },
+  "menuClearSite": {
+    "message": "Bleep: clear this site"
+  }
+}

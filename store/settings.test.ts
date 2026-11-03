@@ -98,3 +98,12 @@ describe('resetSettings', () => {
     expect(useSettingsStore.getState()).toMatchObject(DEFAULTS);
   });
 });
+
+describe('setTypesSite / setTypesGlobal', () => {
+  it('replaces the whole selection (used by presets)', () => {
+    useSettingsStore.getState().setTypesSite(['cache', 'serviceWorkers']);
+    useSettingsStore.getState().setTypesGlobal(['history']);
+    expect(useSettingsStore.getState().selectedTypesSite).toEqual(['cache', 'serviceWorkers']);
+    expect(useSettingsStore.getState().selectedTypesGlobal).toEqual(['history']);
+  });
+});

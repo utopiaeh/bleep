@@ -4,35 +4,38 @@ import { DangerConfirmButton } from '../../components/DangerConfirmButton';
 import { DataTypeGrid } from '../../components/DataTypeGrid';
 import { BehaviorToggles } from '../../components/popup/BehaviorToggles';
 import { StatusButton, type ClearStatus } from '../../components/StatusButton';
+import { useBrowserName } from '../../hooks/useBrowserName';
 import { useReloadGuard } from '../../hooks/useReloadGuard';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { recordClear } from '../../store/clearLog';
 import { useSettingsStore } from '../../store/settings';
+import { GITHUB_REPO_URL, storeReviewUrl } from '../../utils/browser-info';
 import { runClear } from '../../utils/clear-status';
 import {
+  allowedSiteIds,
   clearGlobal,
-  clearLinkedOrigin,
-  clearTabData,
-  dedupeSitesByHostname,
-  filterProtectedTargets,
+  clearSiteWithLinked,
   isProtectedSite,
-  linkedOriginsFor,
+  protectedExcludeOrigins,
   requestOriginPermission,
   siteScopedIds,
-  tabCookieStoreId,
   tabHostname,
-  tabOrigin,
 } from '../../utils/clearing';
 import { siteScopedDataTypes } from '../../utils/data-types';
+import { flashClearResult } from '../../utils/flash';
 
 const QUICK_TYPES = siteScopedDataTypes().filter((t) => t.quick);
+const FOOTER_BUTTON =
+  'rounded-md border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 cursor-pointer';
 
 export default function App() {
   useTheme();
   const t = useTranslation();
+  const browserName = useBrowserName();
   const selectedTypesSite = useSettingsStore((s) => s.selectedTypesSite);
   const toggleTypeSite = useSettingsStore((s) => s.toggleTypeSite);
+  const setTypesSite = useSettingsStore((s) => s.setTypesSite);
   const selectedTypesGlobal = useSettingsStore((s) => s.selectedTypesGlobal);
   const autoReloadAfterClear = useSettingsStore((s) => s.autoReloadAfterClear);
   const setAutoReloadAfterClear = useSettingsStore((s) => s.setAutoReloadAfterClear);
@@ -53,25 +56,27 @@ export default function App() {
     });
   }, []);
 
-  const isActiveTabProtected = activeTabHostname != null && isProtectedSite(protectedSites, activeTabHostname);
+  const cookiesKept =
+    activeTabHostname != null &&
+    selectedTypesSite.includes('cookies') &&
+    allowedSiteIds(activeTabHostname, ['cookies'], protectedSites)?.length === 0;
+  const isActiveTabProtected =
+    activeTabHostname != null && isProtectedSite(protectedSites, activeTabHostname);
 
   async function handleClear() {
+    let ok = false;
     await runClear(setStatus, async () => {
-      let excludeOrigins: string[] = [];
-      if (protectedSites.trim()) {
-        const historyItems = await browser.history.search({ text: '', maxResults: 1000 });
-        excludeOrigins = dedupeSitesByHostname(historyItems.map((item) => item.url))
-          .filter((site) => isProtectedSite(protectedSites, site.hostname))
-          .map((site) => site.origin);
-      }
-      await clearGlobal(selectedTypesGlobal, excludeOrigins);
+      await clearGlobal(selectedTypesGlobal, await protectedExcludeOrigins(protectedSites));
       recordClear('(global)', selectedTypesGlobal);
+      ok = true;
     });
+    flashClearResult(ok, activeTabId ?? undefined);
   }
 
   async function handleClearActiveTab() {
     if (isActiveTabProtected) return;
     setTabStatus('clearing');
+    let ok = false;
     try {
       const granted = await requestOriginPermission();
       const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
@@ -79,19 +84,16 @@ export default function App() {
         setTabStatus('failed');
       } else {
         const ids = siteScopedIds(selectedTypesSite);
-        const ok = granted && activeTab ? await clearTabData(activeTab, ids) : false;
-        if (ok && activeTab) {
-          let linkedTargets: string[] = [];
-          if (useOriginMappings) {
-            const origin = tabOrigin(activeTab);
-            const cookieStoreId = tabCookieStoreId(activeTab);
-            if (origin) {
-              linkedTargets = filterProtectedTargets(linkedOriginsFor(linkedOrigins, origin), protectedSites);
-              await Promise.all(
-                linkedTargets.map((target) => clearLinkedOrigin(target, ids, cookieStoreId)),
-              );
-            }
-          }
+        const linkedTargets =
+          granted && activeTab
+            ? await clearSiteWithLinked(activeTab, ids, {
+                useOriginMappings,
+                linkedOrigins,
+                protectedSites,
+              })
+            : null;
+        ok = linkedTargets != null;
+        if (linkedTargets && activeTab) {
           recordClear(tabHostname(activeTab) ?? activeTab.url ?? '?', ids, linkedTargets);
         }
         setTabStatus(ok ? 'done' : 'failed');
@@ -104,6 +106,7 @@ export default function App() {
       console.error('Bleep: active tab clear failed', err);
       setTabStatus('failed');
     }
+    flashClearResult(ok, activeTabId ?? undefined);
     setTimeout(() => setTabStatus('idle'), 1500);
   }
 
@@ -118,6 +121,7 @@ export default function App() {
         types={QUICK_TYPES}
         selected={selectedTypesSite}
         onToggle={toggleTypeSite}
+        onSetAll={setTypesSite}
         className="mb-3"
       />
 
@@ -143,6 +147,9 @@ export default function App() {
       <p className="text-xs text-stone-500 mt-1">
         {isActiveTabProtected ? t('protectedSiteHint') : t('activeTabHint')}
       </p>
+      {cookiesKept && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t('cookiesKeptHint')}</p>
+      )}
 
       <div className="mt-3">
         <DangerConfirmButton
@@ -153,13 +160,46 @@ export default function App() {
         />
       </div>
       <p className="text-xs text-stone-500 mt-1">{t('allSitesHint')}</p>
+      {protectedSites.trim() && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+          {browserName
+            ? t('protectedSitesGlobalNoteFirefox', { browser: browserName })
+            : t('protectedSitesGlobalNoteChrome')}
+        </p>
+      )}
 
-      <button
-        onClick={() => browser.runtime.openOptionsPage()}
-        className="w-full mt-2 rounded-md border border-stone-300 hover:bg-stone-100 dark:border-stone-600 dark:hover:bg-stone-700 cursor-pointer py-2 text-sm"
-      >
-        {t('settings')}
-      </button>
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={() => browser.runtime.openOptionsPage()}
+          className={`flex-1 py-2 text-sm ${FOOTER_BUTTON}`}
+        >
+          {t('settings')}
+        </button>
+        <a
+          href={GITHUB_REPO_URL}
+          target="_blank"
+          rel="noreferrer"
+          title={t('githubRepoLink')}
+          aria-label={t('githubRepoLink')}
+          className={`px-2.5 flex items-center ${FOOTER_BUTTON}`}
+        >
+          <svg viewBox="0 0 16 16" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+          </svg>
+        </a>
+        <a
+          href={storeReviewUrl()}
+          target="_blank"
+          rel="noreferrer"
+          title={t('helpReviewLink')}
+          aria-label={t('helpReviewLink')}
+          className={`px-2.5 flex items-center ${FOOTER_BUTTON}`}
+        >
+          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+            <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+          </svg>
+        </a>
+      </div>
     </div>
   );
 }

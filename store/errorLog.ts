@@ -22,7 +22,12 @@ export const useErrorLogStore = create<ErrorLogState>()(
       entries: [],
       logError: (message) => {
         const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        set({ entries: [{ id, timestamp: Date.now(), message }, ...get().entries].slice(0, MAX_ERROR_LOG_ENTRIES) });
+        set({
+          entries: [{ id, timestamp: Date.now(), message }, ...get().entries].slice(
+            0,
+            MAX_ERROR_LOG_ENTRIES,
+          ),
+        });
       },
       clearErrors: () => set({ entries: [] }),
     }),

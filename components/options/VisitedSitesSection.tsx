@@ -33,14 +33,22 @@ export function VisitedSitesSection({
 
   return (
     <div className="mt-4">
-      <SectionHeading as="h3" title={t('visitedSites')} description={t('visitedSitesDescription')} />
+      <SectionHeading
+        as="h3"
+        title={t('visitedSites')}
+        description={t('visitedSitesDescription')}
+      />
       {browserName && (
         <p className="text-xs text-stone-500 mb-2">
           {t('visitedSitesContainerCaveat', { browser: browserName })}
         </p>
       )}
 
-      <FilterRow value={filter} onChange={onFilterChange} placeholder={t('filterVisitedSitesPlaceholder')}>
+      <FilterRow
+        value={filter}
+        onChange={onFilterChange}
+        placeholder={t('filterVisitedSitesPlaceholder')}
+      >
         <div className="shrink-0">
           <DangerConfirmButton
             status={status}

@@ -7,3 +7,7 @@ export function withoutItem<T>(set: Set<T>, item: T): Set<T> {
   next.delete(item);
   return next;
 }
+
+export function replaceVisible<T>(selected: T[], visible: Set<T>, next: T[]): T[] {
+  return [...selected.filter((item) => !visible.has(item)), ...next];
+}
