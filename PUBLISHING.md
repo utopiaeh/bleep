@@ -7,9 +7,9 @@
 - [ ] `yarn compile && yarn lint && yarn test` all pass.
 - [ ] `yarn build && yarn build:firefox` both succeed.
 - [ ] `yarn zip && yarn zip:firefox` — produces
-      `.output/cache-cleaner-<version>-chrome.zip`,
-      `.output/cache-cleaner-<version>-firefox.zip`, and
-      `.output/cache-cleaner-<version>-sources.zip`.
+      `.output/bleep-<version>-chrome.zip`,
+      `.output/bleep-<version>-firefox.zip`, and
+      `.output/bleep-<version>-sources.zip`.
 - [ ] Manually reload the built extension in both a Chromium browser and
       Firefox and click through: quick-clear (active tab + all sites),
       Settings page (theme, language, data types, scope, per-site list,
@@ -23,7 +23,7 @@
 Account: [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
 (one-time $5 registration fee).
 
-Upload: `.output/cache-cleaner-<version>-chrome.zip`.
+Upload: `.output/bleep-<version>-chrome.zip`.
 
 Store listing needs:
 
@@ -55,7 +55,7 @@ permissions get manual review, expect the slower end initially.
 
 Account: [addons.mozilla.org developer hub](https://addons.mozilla.org/developers/) (free).
 
-Upload: `.output/cache-cleaner-<version>-firefox.zip` — **all submissions are signed by Mozilla**,
+Upload: `.output/bleep-<version>-firefox.zip` — **all submissions are signed by Mozilla**,
 including self-distributed ones, so this step is mandatory even outside AMO.
 
 Store listing needs:
@@ -77,7 +77,7 @@ code and a clear permission set, which this qualifies for.
 Account: [Partner Center](https://partner.microsoft.com/dashboard/microsoftedge/overview)
 (free).
 
-Upload: the same `.output/cache-cleaner-<version>-chrome.zip` as Chrome — no
+Upload: the same `.output/bleep-<version>-chrome.zip` as Chrome — no
 separate build needed.
 
 Store listing needs the same assets as Chrome: description (reuse
