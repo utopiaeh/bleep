@@ -1,12 +1,29 @@
-# Bleep - Fast Global & Tab Cache Cleaner
+# Bleep - Global & Tab Cache Cleaner
 
 A browser extension for clearing cache, cookies, storage, history, and other
 browsing data — either globally across every site, or scoped to just the one
 open tab you're looking at.
 
 <p align="center">
+  <a href="https://chromewebstore.google.com/detail/bleep-fast-global-tab-cac/dnihnhdbmgjfkdlkahlbbfhginfglomj"><img src="https://img.shields.io/chrome-web-store/v/dnihnhdbmgjfkdlkahlbbfhginfglomj?logo=googlechrome&logoColor=white&label=Chrome%20Web%20Store&style=for-the-badge" height="40" alt="Chrome Web Store" /></a>
+  <a href="https://addons.mozilla.org/firefox/addon/bleep-cache-cleaner/"><img src="https://img.shields.io/amo/v/bleep-cache-cleaner?logo=firefoxbrowser&logoColor=white&label=Firefox%20Add-ons&style=for-the-badge" height="40" alt="Firefox Add-ons" /></a>
+</p>
+
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/bleep-fast-global-tab-cac/dnihnhdbmgjfkdlkahlbbfhginfglomj">Chrome Web Store</a>
+  ·
+  <a href="https://addons.mozilla.org/firefox/addon/bleep-cache-cleaner/">Firefox Add-ons</a>
+</p>
+
+<p align="center">
   <img src="assets/dark_light_popup.png" alt="Popup, dark and light theme" />
 </p>
+
+## Why Bleep
+
+Most cleaners wipe your whole browser. Bleep clears just the site you're on,
+so a broken or stale page gets fixed without logging you out of everything
+else.
 
 ## Features
 
@@ -22,6 +39,11 @@ open tab you're looking at.
 - **Full control in Settings** — the complete type list, a searchable/
   filterable list of open tabs for per-site clearing, bulk "clear all open
   tabs" action, and a recent-history browser with per-item delete.
+- **Keyboard shortcut** — clear the current site with your Per Site settings,
+  no popup needed. None is set by default: pick a key in Settings →
+  Shortcuts. The toolbar icon shows a green dot on success, red on failure.
+- **Right-click menu** — "Bleep: clear this site" on any page or on the
+  toolbar icon.
 - **Two-step confirmation** on the destructive "clear all sites" action —
   arms on first click, only fires on an explicit second click, auto-cancels
   after a few seconds if ignored.

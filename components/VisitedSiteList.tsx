@@ -9,7 +9,12 @@ interface VisitedSiteListProps {
   onClear: (site: VisitedSite) => void;
 }
 
-export function VisitedSiteList({ sites, busyHostnames, failedHostnames, onClear }: VisitedSiteListProps) {
+export function VisitedSiteList({
+  sites,
+  busyHostnames,
+  failedHostnames,
+  onClear,
+}: VisitedSiteListProps) {
   const t = useTranslation();
 
   return (

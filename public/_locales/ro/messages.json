@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "Bleep - Curățare cache, global și per filă"
+  },
+  "extDescription": {
+    "message": "Control total asupra datelor de navigare — șterge cache, cookie-uri, stocare, service worker-i și istoric, global sau per site."
+  },
+  "cmdClearSite": {
+    "message": "Curăță site-ul curent (setări Per site)"
+  },
+  "menuClearSite": {
+    "message": "Bleep: curăță acest site"
+  }
+}

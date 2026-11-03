@@ -11,7 +11,9 @@ export function LanguageSection({ language, onChange }: LanguageSectionProps) {
 
   return (
     <section className="mb-8">
-      <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">{t('language')}</h2>
+      <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
+        {t('language')}
+      </h2>
       <select
         value={language}
         onChange={(e) => onChange(e.target.value as Language)}

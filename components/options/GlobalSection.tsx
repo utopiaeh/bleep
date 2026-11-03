@@ -11,6 +11,7 @@ import { HistorySection } from './HistorySection';
 interface GlobalSectionProps {
   selectedTypes: DataTypeId[];
   onToggleType: (id: DataTypeId) => void;
+  onSetTypes: (ids: DataTypeId[]) => void;
   status: ClearStatus;
   onClear: () => void;
   showHistory: boolean;
@@ -26,6 +27,7 @@ interface GlobalSectionProps {
 export function GlobalSection({
   selectedTypes,
   onToggleType,
+  onSetTypes,
   status,
   onClear,
   showHistory,
@@ -43,7 +45,13 @@ export function GlobalSection({
   return (
     <section className="mb-8">
       <SectionHeading title={t('scopeGlobal')} description={t('scopeGlobalDescription')} />
-      <DataTypeGrid types={DATA_TYPES} selected={selectedTypes} onToggle={onToggleType} className="mb-2" />
+      <DataTypeGrid
+        types={DATA_TYPES}
+        selected={selectedTypes}
+        onToggle={onToggleType}
+        onSetAll={onSetTypes}
+        className="mb-2"
+      />
       <p className="text-xs text-stone-500 mb-3">{t('storageKeyShareNote')}</p>
       <div className="max-w-xs">
         <DangerConfirmButton

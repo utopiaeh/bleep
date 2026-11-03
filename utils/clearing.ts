@@ -1,5 +1,6 @@
 import { browser } from 'wxt/browser';
 import { DATA_TYPES, type DataTypeId } from './data-types';
+import type { ExportableSettings } from './settings-transfer';
 
 function toRemovalOptions(ids: DataTypeId[], supported: Set<string>) {
   const options: Record<string, boolean> = {};
@@ -17,13 +18,22 @@ export async function getSupportedKeys(): Promise<Set<string>> {
 
 export async function clearGlobal(ids: DataTypeId[], excludeOrigins: string[] = []): Promise<void> {
   const supported = await getSupportedKeys();
-  const dataToRemove = toRemovalOptions(ids, supported);
-  if (Object.keys(dataToRemove).length === 0) return;
-  const options: Record<string, unknown> = { since: 0 };
-  if (!import.meta.env.FIREFOX && excludeOrigins.length > 0) {
-    options.excludeOrigins = excludeOrigins;
+  const remove = (options: Record<string, unknown>, types: DataTypeId[]) => {
+    const dataToRemove = toRemovalOptions(types, supported);
+    if (Object.keys(dataToRemove).length === 0) return Promise.resolve();
+    return browser.browsingData.remove(
+      options as Parameters<typeof browser.browsingData.remove>[0],
+      dataToRemove,
+    );
+  };
+
+  if (import.meta.env.FIREFOX || excludeOrigins.length === 0) {
+    await remove({ since: 0 }, ids);
+    return;
   }
-  await browser.browsingData.remove(options as Parameters<typeof browser.browsingData.remove>[0], dataToRemove);
+  // History, Downloads and Form Data can't be filtered by site, so they're left alone while any
+  // site is protected rather than touching the protected sites' entries.
+  await remove({ since: 0, excludeOrigins }, siteScopedIds(ids));
 }
 
 export function siteScopedIds(ids: DataTypeId[]): DataTypeId[] {
@@ -54,7 +64,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-async function clearInMainWorld(ids: string[]): Promise<{ failed: Record<string, string> }> {
+async function clearInMainWorld(
+  ids: string[],
+  protectedHosts: string[],
+): Promise<{ failed: Record<string, string> }> {
+  // Runs in every frame of the page (and after any redirect), so each frame checks its own host:
+  // a protected site embedded in, or redirected to from, the cleared page is left alone.
+  const host = location.hostname.toLowerCase();
+  if (protectedHosts.some((p) => host === p || host.endsWith(`.${p}`))) return { failed: {} };
+
   function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms);
@@ -114,12 +132,16 @@ async function clearHostnameScopedNative(hostname: string, ids: DataTypeId[]): P
   );
 }
 
-async function runContentScriptClear(tabId: number, scriptIds: DataTypeId[]): Promise<void> {
+async function runContentScriptClear(
+  tabId: number,
+  scriptIds: DataTypeId[],
+  protectedSites: string,
+): Promise<void> {
   const injections = await browser.scripting.executeScript({
     target: { tabId, allFrames: true },
     world: 'MAIN',
     func: clearInMainWorld,
-    args: [scriptIds],
+    args: [scriptIds, parseHostList(protectedSites)],
   });
   for (const injection of injections) {
     const failed = injection?.result?.failed;
@@ -133,6 +155,7 @@ async function clearSiteViaContentScript(
   tabId: number,
   origin: string,
   ids: DataTypeId[],
+  protectedSites: string,
   cookieStoreId?: string,
 ): Promise<void> {
   const scoped = siteScopedIds(ids);
@@ -140,10 +163,10 @@ async function clearSiteViaContentScript(
 
   const tasks: Promise<unknown>[] = [];
   if (scriptIds.length > 0) {
-    tasks.push(withTimeout(runContentScriptClear(tabId, scriptIds), 15000));
+    tasks.push(withTimeout(runContentScriptClear(tabId, scriptIds, protectedSites), 15000));
   }
   if (scoped.includes('cookies')) {
-    tasks.push(withTimeout(clearCookiesForOrigin(origin, cookieStoreId), 15000));
+    tasks.push(withTimeout(clearCookiesForOrigin(origin, protectedSites, cookieStoreId), 15000));
   }
   if (scoped.some((id) => id in NATIVE_HOSTNAME_KEYS)) {
     tasks.push(withTimeout(clearHostnameScopedNative(new URL(origin).hostname, scoped), 15000));
@@ -155,14 +178,31 @@ export async function requestOriginPermission(): Promise<boolean> {
   return browser.permissions.request({ origins: ['*://*/*'] });
 }
 
-async function clearCookiesForOrigin(origin: string, storeId?: string): Promise<void> {
-  const options = { url: origin, storeId, partitionKey: {} } as Parameters<typeof browser.cookies.getAll>[0];
+async function clearCookiesForOrigin(
+  origin: string,
+  protectedSites: string,
+  storeId?: string,
+): Promise<void> {
+  const options = { url: origin, storeId, partitionKey: {} } as Parameters<
+    typeof browser.cookies.getAll
+  >[0];
   const cookies = await browser.cookies
     .getAll(options)
-    .catch(() => browser.cookies.getAll({ url: origin, storeId } as Parameters<typeof browser.cookies.getAll>[0]));
+    .catch(() =>
+      browser.cookies.getAll({ url: origin, storeId } as Parameters<
+        typeof browser.cookies.getAll
+      >[0]),
+    );
+
+  // Cookies an embed stored inside a protected site's partition belong to that protected site.
+  const outsideProtected = cookies.filter((cookie) => {
+    const topLevel = (cookie as { partitionKey?: { topLevelSite?: string } }).partitionKey
+      ?.topLevelSite;
+    return !topLevel || !isProtectedSite(protectedSites, extractHostname(topLevel));
+  });
 
   await Promise.all(
-    cookies.map((cookie) =>
+    outsideProtected.map((cookie) =>
       browser.cookies.remove({
         url: origin,
         name: cookie.name,
@@ -241,7 +281,56 @@ function parseHostList(raw: string): string[] {
 
 export function isProtectedSite(raw: string, hostname: string): boolean {
   const host = hostname.toLowerCase();
-  return parseHostList(raw).some((protectedHost) => host === protectedHost || host.endsWith(`.${protectedHost}`));
+  return parseHostList(raw).some(
+    (protectedHost) => host === protectedHost || host.endsWith(`.${protectedHost}`),
+  );
+}
+
+export async function protectedExcludeOrigins(protectedRaw: string): Promise<string[]> {
+  const hosts = parseHostList(protectedRaw);
+  if (hosts.length === 0 || import.meta.env.FIREFOX) return [];
+  const origins = new Set(hosts.flatMap((host) => [`https://${host}`, `http://${host}`]));
+  // startTime: 0 — history.search otherwise only looks back 24 hours.
+  const items = await browser.history.search({ text: '', startTime: 0, maxResults: 100000 });
+  for (const item of items) {
+    const origin = item.url ? tabOrigin(item) : null;
+    if (origin && isProtectedSite(protectedRaw, extractHostname(origin))) origins.add(origin);
+  }
+  return [...origins];
+}
+
+const MULTI_PART_SUFFIX = /^(co|com|net|org|gov|edu|ac)\.[a-z]{2}$/;
+
+// ponytail: approximates the registrable domain (example.com, example.co.uk); use a public-suffix
+// list if a protected site on an unusual suffix gets its cookies cleared.
+function parentDomain(host: string): string {
+  const labels = host.split('.');
+  const lastTwo = labels.slice(-2).join('.');
+  return MULTI_PART_SUFFIX.test(lastTwo) ? labels.slice(-3).join('.') : lastTwo;
+}
+
+// Every per-site clear goes through this, so protected sites stay untouched whoever the caller is.
+// Cookies are dropped too when a protected site shares the parent domain: both Chrome
+// (origins: [...]) and Firefox (cookies sent to the URL) clear parent-domain cookies.
+export function allowedSiteIds(
+  origin: string,
+  ids: DataTypeId[],
+  protectedRaw: string,
+): DataTypeId[] | null {
+  const host = extractHostname(origin);
+  if (isProtectedSite(protectedRaw, host)) return null;
+  const protectedHosts = parseHostList(protectedRaw);
+  const parent = parentDomain(host);
+  let allowed = ids;
+  if (protectedHosts.some((p) => parentDomain(p) === parent)) {
+    allowed = allowed.filter((id) => id !== 'cookies');
+  }
+  // Firefox's browsingData `hostnames` filter may also cover subdomains, so when a protected site
+  // sits under this host, skip the types that go through it.
+  if (import.meta.env.FIREFOX && protectedHosts.some((p) => p.endsWith(`.${host}`))) {
+    allowed = allowed.filter((id) => !(id in NATIVE_HOSTNAME_KEYS));
+  }
+  return allowed;
 }
 
 export function filterProtectedTargets(targets: string[], protectedRaw: string): string[] {
@@ -269,9 +358,12 @@ function waitForTabComplete(tabId: number, ms: number): Promise<void> {
 
 export async function clearLinkedOrigin(
   origin: string,
-  ids: DataTypeId[],
+  requestedIds: DataTypeId[],
+  protectedSites: string,
   cookieStoreId?: string,
 ): Promise<void> {
+  const ids = allowedSiteIds(origin, requestedIds, protectedSites);
+  if (!ids) return;
   const scoped = siteScopedIds(ids);
   if (scoped.length === 0) return;
 
@@ -288,7 +380,7 @@ export async function clearLinkedOrigin(
         try {
           if (tab.id != null) {
             await waitForTabComplete(tab.id, 10000).catch(() => {});
-            await withTimeout(runContentScriptClear(tab.id, scriptIds), 15000);
+            await withTimeout(runContentScriptClear(tab.id, scriptIds, protectedSites), 15000);
           }
         } finally {
           if (tab.id != null) await browser.tabs.remove(tab.id).catch(() => {});
@@ -300,7 +392,7 @@ export async function clearLinkedOrigin(
 
     const tasks: Promise<unknown>[] = [];
     if (scoped.includes('cookies')) {
-      tasks.push(withTimeout(clearCookiesForOrigin(origin, cookieStoreId), 15000));
+      tasks.push(withTimeout(clearCookiesForOrigin(origin, protectedSites, cookieStoreId), 15000));
     }
     if (scoped.some((id) => id in NATIVE_HOSTNAME_KEYS)) {
       tasks.push(withTimeout(clearHostnameScopedNative(new URL(origin).hostname, scoped), 15000));
@@ -320,7 +412,8 @@ export function tabCookieStoreId(tab: object): string | undefined {
 export function tabOrigin(tab: { url?: string }): string | null {
   if (!tab.url) return null;
   try {
-    return new URL(tab.url).origin;
+    const { origin } = new URL(tab.url);
+    return origin === 'null' ? null : origin;
   } catch {
     return null;
   }
@@ -357,24 +450,51 @@ export function dedupeSitesByHostname(urls: Array<string | undefined>): VisitedS
 
 export async function clearTabData(
   tab: { id?: number; url?: string; cookieStoreId?: string },
-  ids: DataTypeId[],
+  requestedIds: DataTypeId[],
+  protectedSites: string,
 ): Promise<boolean> {
   const origin = tabOrigin(tab);
   if (!origin || tab.id == null) return false;
+  const ids = allowedSiteIds(origin, requestedIds, protectedSites);
+  if (!ids) return false;
 
   if (import.meta.env.FIREFOX) {
-    await clearSiteViaContentScript(tab.id, origin, ids, tab.cookieStoreId);
+    await clearSiteViaContentScript(tab.id, origin, ids, protectedSites, tab.cookieStoreId);
   } else {
     await clearSiteViaBrowsingData(origin, ids);
   }
   return true;
 }
 
-export async function clearTab(
+export type SiteClearOptions = Pick<
+  ExportableSettings,
+  'useOriginMappings' | 'linkedOrigins' | 'protectedSites'
+>;
+
+export async function clearMappedTargets(
+  origin: string,
+  ids: DataTypeId[],
+  opts: SiteClearOptions,
+  cookieStoreId?: string,
+): Promise<string[]> {
+  if (!opts.useOriginMappings) return [];
+  const targets = filterProtectedTargets(
+    linkedOriginsFor(opts.linkedOrigins, origin),
+    opts.protectedSites,
+  );
+  await Promise.all(
+    targets.map((target) => clearLinkedOrigin(target, ids, opts.protectedSites, cookieStoreId)),
+  );
+  return targets;
+}
+
+export async function clearSiteWithLinked(
   tab: { id?: number; url?: string },
   ids: DataTypeId[],
-): Promise<boolean> {
-  const granted = await requestOriginPermission();
-  if (!granted) return false;
-  return clearTabData(tab, ids);
+  opts: SiteClearOptions,
+): Promise<string[] | null> {
+  const ok = await clearTabData(tab, ids, opts.protectedSites);
+  if (!ok) return null;
+  const origin = tabOrigin(tab);
+  return origin ? clearMappedTargets(origin, ids, opts, tabCookieStoreId(tab)) : [];
 }

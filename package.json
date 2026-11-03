@@ -3,7 +3,7 @@
   "description": "Bleep - Clear cache, storage, and browsing data — globally or per-site.",
   "author": "utopiaeh01@gmail.com",
   "private": true,
-  "version": "0.4.3",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -15,6 +15,7 @@
     "compile": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "postinstall": "wxt prepare"
   },

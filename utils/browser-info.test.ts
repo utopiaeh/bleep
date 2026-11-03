@@ -19,9 +19,10 @@ describe('isGeckoBased', () => {
 
 describe('getBrowserName', () => {
   it('returns the self-reported name from getBrowserInfo (e.g. a fork with no name override)', async () => {
-    (browser.runtime as { getBrowserInfo?: () => Promise<{ name: string }> }).getBrowserInfo = async () => ({
-      name: 'Firefox',
-    });
+    (browser.runtime as { getBrowserInfo?: () => Promise<{ name: string }> }).getBrowserInfo =
+      async () => ({
+        name: 'Firefox',
+      });
     expect(await getBrowserName()).toBe('Firefox');
   });
 
@@ -37,9 +38,10 @@ describe('getBrowserName', () => {
   });
 
   it('falls back to "Firefox" when getBrowserInfo rejects', async () => {
-    (browser.runtime as { getBrowserInfo?: () => Promise<{ name: string }> }).getBrowserInfo = async () => {
-      throw new Error('boom');
-    };
+    (browser.runtime as { getBrowserInfo?: () => Promise<{ name: string }> }).getBrowserInfo =
+      async () => {
+        throw new Error('boom');
+      };
     expect(await getBrowserName()).toBe('Firefox');
   });
 });

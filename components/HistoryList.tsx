@@ -15,7 +15,9 @@ export function HistoryList({ items, onDelete }: HistoryListProps) {
       items={items}
       keyOf={(item) => item.id}
       emptyLabel={t('noMatchingHistory')}
-      renderRow={(item) => <span className="text-sm truncate max-w-md">{item.title || item.url}</span>}
+      renderRow={(item) => (
+        <span className="text-sm truncate max-w-md">{item.title || item.url}</span>
+      )}
       buttonLabel={() => t('remove')}
       buttonDisabled={() => false}
       onClear={(item) => item.url && onDelete(item.url)}

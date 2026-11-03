@@ -20,6 +20,8 @@ interface SettingsState {
   language: Language;
   toggleTypeGlobal: (id: DataTypeId) => void;
   toggleTypeSite: (id: DataTypeId) => void;
+  setTypesGlobal: (ids: DataTypeId[]) => void;
+  setTypesSite: (ids: DataTypeId[]) => void;
   setAutoReloadAfterClear: (value: boolean) => void;
   setLinkedOrigins: (value: string) => void;
   setUseOriginMappings: (value: boolean) => void;
@@ -50,6 +52,8 @@ export const useSettingsStore = create<SettingsState>()(
       ...DEFAULTS,
       toggleTypeGlobal: (id) => toggleIn(set, get, 'selectedTypesGlobal', id),
       toggleTypeSite: (id) => toggleIn(set, get, 'selectedTypesSite', id),
+      setTypesGlobal: (ids) => set({ selectedTypesGlobal: ids }),
+      setTypesSite: (ids) => set({ selectedTypesSite: ids }),
       setAutoReloadAfterClear: (value) => set({ autoReloadAfterClear: value }),
       setLinkedOrigins: (value) => set({ linkedOrigins: value }),
       setUseOriginMappings: (value) => set({ useOriginMappings: value }),

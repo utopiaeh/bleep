@@ -11,7 +11,9 @@ export function ThemeSection({ theme, onChange }: ThemeSectionProps) {
 
   return (
     <section className="mb-8">
-      <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">{t('theme')}</h2>
+      <h2 className="text-sm uppercase tracking-wide text-stone-500 dark:text-stone-400 mb-2">
+        {t('theme')}
+      </h2>
       <div className="flex gap-4">
         {(
           [

@@ -13,8 +13,16 @@ describe('exportSettingsJson', () => {
 
 describe('parseImportedSettings', () => {
   it('round-trips a full valid export', () => {
-    const json = exportSettingsJson({ ...DEFAULTS, linkedOrigins: 'a.com => b.com', theme: 'dark' });
-    expect(parseImportedSettings(json)).toEqual({ ...DEFAULTS, linkedOrigins: 'a.com => b.com', theme: 'dark' });
+    const json = exportSettingsJson({
+      ...DEFAULTS,
+      linkedOrigins: 'a.com => b.com',
+      theme: 'dark',
+    });
+    expect(parseImportedSettings(json)).toEqual({
+      ...DEFAULTS,
+      linkedOrigins: 'a.com => b.com',
+      theme: 'dark',
+    });
   });
 
   it('drops unknown fields', () => {
@@ -23,7 +31,9 @@ describe('parseImportedSettings', () => {
   });
 
   it('drops a field with the wrong type instead of importing garbage', () => {
-    const result = parseImportedSettings(JSON.stringify({ ...DEFAULTS, autoReloadAfterClear: 'yes' }));
+    const result = parseImportedSettings(
+      JSON.stringify({ ...DEFAULTS, autoReloadAfterClear: 'yes' }),
+    );
     expect(result).not.toHaveProperty('autoReloadAfterClear');
   });
 
@@ -38,12 +48,16 @@ describe('parseImportedSettings', () => {
   });
 
   it('rejects a non-array value for an array field', () => {
-    const result = parseImportedSettings(JSON.stringify({ ...DEFAULTS, selectedTypesGlobal: 'cache' }));
+    const result = parseImportedSettings(
+      JSON.stringify({ ...DEFAULTS, selectedTypesGlobal: 'cache' }),
+    );
     expect(result).not.toHaveProperty('selectedTypesGlobal');
   });
 
   it('rejects an array with non-string elements', () => {
-    const result = parseImportedSettings(JSON.stringify({ ...DEFAULTS, selectedTypesGlobal: [1, 2] }));
+    const result = parseImportedSettings(
+      JSON.stringify({ ...DEFAULTS, selectedTypesGlobal: [1, 2] }),
+    );
     expect(result).not.toHaveProperty('selectedTypesGlobal');
   });
 
@@ -54,7 +68,10 @@ describe('parseImportedSettings', () => {
 
 describe('sanitizeSettings', () => {
   it('passes through a valid object unchanged (field-wise)', () => {
-    expect(sanitizeSettings({ ...DEFAULTS, theme: 'dark' })).toEqual({ ...DEFAULTS, theme: 'dark' });
+    expect(sanitizeSettings({ ...DEFAULTS, theme: 'dark' })).toEqual({
+      ...DEFAULTS,
+      theme: 'dark',
+    });
   });
 
   it('treats null/undefined as an empty object instead of throwing — the shape a persist store sees on first load', () => {

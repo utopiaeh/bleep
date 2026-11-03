@@ -11,7 +11,13 @@ interface TabClearListProps {
   onClear: (tab: Browser.tabs.Tab) => void;
 }
 
-export function TabClearList({ tabs, busyTabIds, failedTabIds, reloadingTabIds, onClear }: TabClearListProps) {
+export function TabClearList({
+  tabs,
+  busyTabIds,
+  failedTabIds,
+  reloadingTabIds,
+  onClear,
+}: TabClearListProps) {
   const t = useTranslation();
 
   return (
@@ -34,7 +40,8 @@ export function TabClearList({ tabs, busyTabIds, failedTabIds, reloadingTabIds, 
         return t('clear');
       }}
       buttonDisabled={(tab) =>
-        (tab.id != null && busyTabIds.has(tab.id)) || (tab.id != null && (reloadingTabIds?.has(tab.id) ?? false))
+        (tab.id != null && busyTabIds.has(tab.id)) ||
+        (tab.id != null && (reloadingTabIds?.has(tab.id) ?? false))
       }
       onClear={onClear}
     />

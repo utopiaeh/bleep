@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withItem, withoutItem } from './set-helpers';
+import { replaceVisible, withItem, withoutItem } from './set-helpers';
 
 describe('withItem', () => {
   it('returns a new set with the item added', () => {
@@ -24,5 +24,15 @@ describe('withoutItem', () => {
 
   it('is a no-op when the item is absent', () => {
     expect(withoutItem(new Set([1]), 2)).toEqual(new Set([1]));
+  });
+});
+
+describe('replaceVisible', () => {
+  it('swaps only the visible items and keeps hidden selections', () => {
+    expect(
+      replaceVisible(['history', 'cache', 'cookies'], new Set(['cache', 'cookies', 'indexedDB']), [
+        'indexedDB',
+      ]),
+    ).toEqual(['history', 'indexedDB']);
   });
 });

@@ -117,7 +117,10 @@ describe('linkedOriginsFor', () => {
 
   it('flattens targets across multiple matching mappings', () => {
     const multi = 'domain.com => a.com\ndomain.com => b.com';
-    expect(linkedOriginsFor(multi, 'https://domain.com')).toEqual(['https://a.com', 'https://b.com']);
+    expect(linkedOriginsFor(multi, 'https://domain.com')).toEqual([
+      'https://a.com',
+      'https://b.com',
+    ]);
   });
 });
 
@@ -132,7 +135,9 @@ describe('dedupeSitesByHostname', () => {
 
   it('keeps the origin of the first (most recent) occurrence', () => {
     const urls = ['http://domain.com/first', 'https://domain.com/second'];
-    expect(dedupeSitesByHostname(urls)).toEqual([{ hostname: 'domain.com', origin: 'http://domain.com' }]);
+    expect(dedupeSitesByHostname(urls)).toEqual([
+      { hostname: 'domain.com', origin: 'http://domain.com' },
+    ]);
   });
 
   it('skips missing and unparsable urls', () => {
@@ -142,8 +147,15 @@ describe('dedupeSitesByHostname', () => {
   });
 
   it('skips non-http(s) urls (chrome://, about:, file://)', () => {
-    const urls = ['chrome://extensions/', 'about:blank', 'file:///Users/me/index.html', 'https://domain.com'];
-    expect(dedupeSitesByHostname(urls)).toEqual([{ hostname: 'domain.com', origin: 'https://domain.com' }]);
+    const urls = [
+      'chrome://extensions/',
+      'about:blank',
+      'file:///Users/me/index.html',
+      'https://domain.com',
+    ];
+    expect(dedupeSitesByHostname(urls)).toEqual([
+      { hostname: 'domain.com', origin: 'https://domain.com' },
+    ]);
   });
 
   it('returns an empty list for no input', () => {

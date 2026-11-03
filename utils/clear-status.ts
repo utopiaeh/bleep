@@ -12,7 +12,10 @@ export function clearAllLabel(
   return t('clearAllCount', { count });
 }
 
-export async function runClear(setStatus: (status: ClearStatus) => void, fn: () => Promise<void>): Promise<void> {
+export async function runClear(
+  setStatus: (status: ClearStatus) => void,
+  fn: () => Promise<void>,
+): Promise<void> {
   setStatus('clearing');
   try {
     await fn();

@@ -44,6 +44,22 @@ export const useClearLogStore = create<ClearLogState>()(
   ),
 );
 
-export function recordClear(hostname: string, types: DataTypeId[], linkedTargets: string[] = []): void {
-  useClearLogStore.getState().logClear({ timestamp: Date.now(), hostname, types, linkedTargets });
+let pending: Promise<void> = Promise.resolve();
+
+// Popup, options and background each hold their own copy of the log, so reload it before writing
+// or the last writer would drop the others' entries.
+export function recordClear(
+  hostname: string,
+  types: DataTypeId[],
+  linkedTargets: string[] = [],
+): Promise<void> {
+  pending = pending
+    .then(() => useClearLogStore.persist.rehydrate())
+    .catch(() => {})
+    .then(() => {
+      useClearLogStore
+        .getState()
+        .logClear({ timestamp: Date.now(), hostname, types, linkedTargets });
+    });
+  return pending;
 }

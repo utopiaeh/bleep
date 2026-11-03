@@ -41,7 +41,9 @@ describe('browserSyncStorage', () => {
     await browserSyncStorage.setItem('settings', big);
     expect(await browserSyncStorage.getItem('settings')).toBe(big);
     expect(browser.storage.sync.set).toHaveBeenCalled();
-    const lastCallArgs = (browser.storage.sync.set as ReturnType<typeof vi.fn>).mock.calls.at(-1)![0];
+    const lastCallArgs = (browser.storage.sync.set as ReturnType<typeof vi.fn>).mock.calls.at(
+      -1,
+    )![0];
     expect(Object.keys(lastCallArgs).length).toBeGreaterThan(1);
   });
 
@@ -58,12 +60,16 @@ describe('browserSyncStorage', () => {
   it('overwriting with a shorter value does not leave stale trailing chunks', async () => {
     const data = stubSyncStorage();
     await browserSyncStorage.setItem('settings', 'x'.repeat(20000));
-    const chunkCountBefore = Object.keys(data).filter((k) => k.startsWith('settings__') && k !== 'settings__len').length;
+    const chunkCountBefore = Object.keys(data).filter(
+      (k) => k.startsWith('settings__') && k !== 'settings__len',
+    ).length;
     expect(chunkCountBefore).toBeGreaterThan(1);
 
     await browserSyncStorage.setItem('settings', 'short');
     expect(await browserSyncStorage.getItem('settings')).toBe('short');
-    const chunkCountAfter = Object.keys(data).filter((k) => k.startsWith('settings__') && k !== 'settings__len').length;
+    const chunkCountAfter = Object.keys(data).filter(
+      (k) => k.startsWith('settings__') && k !== 'settings__len',
+    ).length;
     expect(chunkCountAfter).toBe(1);
   });
 

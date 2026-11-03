@@ -16,3 +16,12 @@ export async function getBrowserName(): Promise<string> {
     return 'Firefox';
   }
 }
+
+export const GITHUB_REPO_URL = 'https://github.com/utopiaeh/bleep';
+const CHROME_REVIEW_URL =
+  'https://chromewebstore.google.com/detail/dnihnhdbmgjfkdlkahlbbfhginfglomj/reviews';
+const FIREFOX_REVIEW_URL = 'https://addons.mozilla.org/firefox/addon/bleep-cache-cleaner/reviews/';
+
+export function storeReviewUrl(): string {
+  return isGeckoBased() ? FIREFOX_REVIEW_URL : CHROME_REVIEW_URL;
+}

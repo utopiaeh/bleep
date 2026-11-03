@@ -1,4 +1,4 @@
-import type { DataTypeId } from './data-types';
+import { DATA_TYPES, type DataTypeId } from './data-types';
 import type { Language } from './i18n';
 
 export type Theme = 'system' | 'light' | 'dark';
@@ -10,6 +10,12 @@ const DEFAULT_TYPES: DataTypeId[] = [
   'localStorage',
   'sessionStorage',
 ];
+
+export const PRESETS = {
+  presetDefault: DEFAULT_TYPES,
+  presetDev: ['cacheStorage', 'cache', 'serviceWorkers'],
+  presetEverything: DATA_TYPES.map((type) => type.id),
+} satisfies Record<string, DataTypeId[]>;
 
 export const DEFAULTS = {
   selectedTypesGlobal: [...DEFAULT_TYPES],
